@@ -1,0 +1,147 @@
+/* room.css - glass look. Sab kuch .rm-scene ke andar hai, isliye purani CSS nahi tutegi. */
+
+.rm-scene {
+  --rm-glass: linear-gradient(160deg, rgba(255,255,255,.34), rgba(255,255,255,.12));
+  --rm-border: rgba(255,255,255,.35);
+  --rm-soft: rgba(255,255,255,.74);
+  --rm-blue: #2f6df6;
+
+  min-height: 100vh;
+  padding: clamp(16px, 3vw, 48px);
+  color: #fff;
+  background:
+    linear-gradient(rgba(30,20,10,.25), rgba(30,20,10,.35)),
+    url("/bg.jpg") center / cover fixed no-repeat,
+    linear-gradient(180deg, #8b7560 0%, #6a5748 55%, #3f342b 100%);
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr) 300px;
+  grid-template-areas:
+    "greet greet greet"
+    "bar   bar   bar"
+    "side  stage prog"
+    "side  dock  prog";
+  grid-template-rows: auto auto 1fr auto;
+  gap: 20px 24px;
+}
+
+.rm-glass {
+  background: var(--rm-glass);
+  backdrop-filter: blur(26px) saturate(140%);
+  -webkit-backdrop-filter: blur(26px) saturate(140%);
+  border: 1px solid var(--rm-border);
+  box-shadow: 0 18px 50px rgba(20,12,5,.3), inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+/* ---------- Greeting ---------- */
+.rm-greeting { grid-area: greet; display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 0 8px; }
+.rm-greeting h1 { margin: 0; font-size: clamp(26px, 3vw, 40px); font-weight: 300; letter-spacing: -.02em; }
+.rm-greeting h1 strong { font-weight: 700; }
+.rm-clock { display: flex; align-items: center; gap: 18px; font-size: clamp(30px, 3.4vw, 46px); font-weight: 300; }
+.rm-clock small { font-size: 14px; line-height: 1.4; color: var(--rm-soft); border-left: 1px solid var(--rm-border); padding-left: 16px; }
+
+/* ---------- Top bar ---------- */
+.rm-topbar { grid-area: bar; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 999px; }
+.rm-title { flex: 1; text-align: center; font-size: 18px; font-weight: 500; }
+.rm-btn {
+  height: 46px; padding: 0 20px; border: 0; border-radius: 999px;
+  background: rgba(255,255,255,.28); color: #fff; font: inherit; font-size: 15px; cursor: pointer;
+  transition: background .2s, transform .15s;
+}
+.rm-btn:hover { background: rgba(255,255,255,.42); }
+.rm-btn:active { transform: scale(.97); }
+.rm-icon { width: 46px; padding: 0; }
+
+/* ---------- Sidebar ---------- */
+.rm-sidebar { grid-area: side; align-self: start; padding: 16px; border-radius: 30px; display: flex; flex-direction: column; gap: 6px; }
+.rm-nav {
+  display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 18px;
+  border: 0; border-radius: 999px; background: transparent; color: #fff;
+  font: inherit; font-size: 16px; text-align: left; cursor: pointer; transition: background .2s;
+}
+.rm-nav:hover { background: rgba(255,255,255,.16); }
+.rm-nav.active { background: rgba(255,255,255,.36); box-shadow: inset 0 1px 0 rgba(255,255,255,.5); }
+
+/* ---------- Main stage (aapke saare pages yahan khulte hain) ---------- */
+.rm-stage { grid-area: stage; min-width: 0; padding: 26px; border-radius: 30px; overflow-y: auto; max-height: calc(100vh - 340px); min-height: 420px; }
+.rm-stage h1 { font-size: 28px; font-weight: 600; margin-top: 0; }
+
+/* ---------- Balance card ---------- */
+.rm-progress { grid-area: prog; align-self: start; padding: 26px; border-radius: 28px; }
+.rm-progress h2 { margin: 0 0 18px; text-align: center; font-size: 36px; font-weight: 300; letter-spacing: -.02em; }
+.rm-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 16px; color: var(--rm-soft); border-bottom: 1px solid rgba(255,255,255,.15); }
+.rm-row:last-child { border-bottom: 0; }
+.rm-row b { color: #fff; font-weight: 600; }
+
+/* ---------- Bottom pill ---------- */
+.rm-dock {
+  grid-area: dock; justify-self: center; width: min(560px, 100%);
+  display: flex; align-items: center; gap: 14px; padding: 12px 14px 12px 22px;
+  border-radius: 999px; cursor: pointer; text-align: left; color: #fff; font: inherit;
+}
+.rm-dock .rm-text { flex: 1; line-height: 1.35; font-size: 16px; }
+.rm-dock small { display: block; color: var(--rm-soft); font-size: 14px; }
+.rm-go { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--rm-border); display: grid; place-items: center; font-size: 20px; }
+
+/* =====================================================
+   Purane pages (Payments, Friends, Split...) ko glass look dena
+   ===================================================== */
+.rm-scene h1, .rm-scene h2, .rm-scene h3 { color: #fff; }
+.rm-scene .sub, .rm-scene label, .rm-scene .entry-meta { color: var(--rm-soft); }
+
+.rm-scene .card, .rm-scene .stat {
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28);
+  border-radius: 22px; color: #fff; box-shadow: none;
+}
+.rm-scene .entry {
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
+  border-radius: 18px; color: #fff;
+}
+.rm-scene .entry.settled { opacity: .55; }
+.rm-scene .entry-name { color: #fff; }
+.rm-scene .pos { color: #a6f3c6; }
+.rm-scene .neg { color: #ffc2c2; }
+
+.rm-scene input, .rm-scene select, .rm-scene textarea {
+  background: rgba(60,50,42,.35); border: 1px solid rgba(255,255,255,.28);
+  border-radius: 14px; color: #fff;
+}
+.rm-scene input::placeholder { color: rgba(255,255,255,.55); }
+.rm-scene option { color: #222; }
+
+.rm-scene .primary, .rm-scene .small {
+  background: #fff; color: var(--rm-blue); border: 0; border-radius: 999px; font-weight: 600;
+}
+.rm-scene .ghost {
+  background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 999px;
+}
+.rm-scene .seg button, .rm-scene .tab {
+  background: rgba(255,255,255,.16); color: #fff; border: 0; border-radius: 999px;
+}
+.rm-scene .seg button.on, .rm-scene .tab.active { background: #fff; color: var(--rm-blue); }
+.rm-scene .link, .rm-scene .remind { color: #cfe0ff; }
+.rm-scene .del { color: #ffd0d0; }
+.rm-scene .del.muted { color: var(--rm-soft); }
+.rm-scene .back { color: #fff; }
+
+/* ---------- Focus + motion ---------- */
+.rm-scene :focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .rm-scene * { transition: none !important; } }
+
+/* ---------- Tablet / phone ---------- */
+@media (max-width: 1100px) {
+  .rm-scene {
+    grid-template-columns: 1fr;
+    grid-template-areas: "greet" "bar" "prog" "stage" "dock";
+    grid-template-rows: none;
+    padding: 16px 14px 110px;
+  }
+  .rm-clock small { display: none; }
+  .rm-stage { max-height: none; min-height: 0; padding: 18px; }
+  .rm-title { display: none; }
+  .rm-topbar { justify-content: space-between; }
+  .rm-sidebar {
+    position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 20;
+    flex-direction: row; justify-content: space-around; padding: 8px; border-radius: 999px;
+  }
+  .rm-nav { flex-direction: column; gap: 2px; height: 56px; padding: 0 8px; font-size: 11px; justify-content: center; }
+}
