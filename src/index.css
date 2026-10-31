@@ -1,5 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap");
 
+/* =====================================================================
+   SplitPay - frosted glass UI (warm beige + glowing swirl background)
+   Put this file at:  payment-tracker/src/index.css
+   ===================================================================== */
+
 :root {
   color-scheme: light;
   /* Glass see-through: higher number = LESS transparent, lower number = MORE transparent */

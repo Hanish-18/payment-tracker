@@ -4,6 +4,7 @@ import QRSection from "./QRSection";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { getUpi, buildMessage, openWhatsApp, shareQR } from "./reminder";
 import Split from "./Split";
+   import PaymentsHub from "./PaymentsHub";
    import SplitHub from "./SplitHub";
       import FriendScan from "./FriendScan";
          import InviteClaim from "./InviteClaim";
@@ -179,7 +180,7 @@ function Shell({ session }) {
         {error && <p className="error">{error}</p>}
         {page === "Dashboard" && <Dashboard entries={entries} session={session} />}
         {page === "Payments" && (
-          <PaymentsPage
+             <PaymentsHub
             entries={entries}
             friends={friends}
             reload={load}
