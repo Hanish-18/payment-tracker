@@ -19,12 +19,23 @@ function statusLabel(p, incoming) {
 
 function PayPanel({ target, friends, setError, onPaid, onClose }) {
   const friendRow = friends.find((f) => f.name === target.friend);
-  const amount = target.entries.reduce((s, e) => s + Number(e.amount), 0);
+  const amount = target.amount ?? target.entries.reduce((s, e) => s + Number(e.amount), 0);
   const [upi, setUpi] = useState("");
   const [payee, setPayee] = useState(target.friend);
   const [payId, setPayId] = useState(null);
   const [ref, setRef] = useState("");
   const [busy, setBusy] = useState(false);
+  const [opened, setOpened] = useState(false);
+  const [back, setBack] = useState(false);
+
+  // UPI app se wapas aane par "Payment kiya?" popup
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === "visible" && opened) setBack(true);
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [opened]);
 
   useEffect(() => {
     if (!friendRow) return;
@@ -83,6 +94,7 @@ function PayPanel({ target, friends, setError, onPaid, onClose }) {
     setBusy(false);
     if (!id) return;
     setError("");
+    setOpened(true);
     window.location.href = url;
   }
 
@@ -95,7 +107,14 @@ function PayPanel({ target, friends, setError, onPaid, onClose }) {
     const id = await ensureRow();
     if (id) {
       const ok = await onPaid(
-        { id, entry_ids: target.entries.map((e) => e.id), reference: null },
+        {
+          id,
+          entry_ids: target.entries.map((e) => e.id),
+          reference: null,
+          friend_name: target.friend,
+          amount,
+          payee_upi: upi.trim(),
+        },
         ref.trim()
       );
       if (ok) onClose();
@@ -111,16 +130,18 @@ function PayPanel({ target, friends, setError, onPaid, onClose }) {
   return (
     <div className="card">
       <h3>Pay {rupee(amount)} to {target.friend}</h3>
-      <p className="sub" style={{ margin: "8px 0 0" }}>
-        {target.entries.length} payment{target.entries.length === 1 ? "" : "s"} included.
-      </p>
+      {target.entries.length > 0 && (
+        <p className="sub" style={{ margin: "8px 0 0" }}>
+          {target.entries.length} payment{target.entries.length === 1 ? "" : "s"} included.
+        </p>
+      )}
 
       <label>{target.friend}'s UPI ID</label>
       <input value={upi} onChange={(e) => setUpi(e.target.value)} placeholder="name@bank" />
 
       {valid && isMobile() && (
         <>
-          <label>Open in</label>
+          <label>Which app do you want to pay with?</label>
           <div className="seg">
             <button type="button" disabled={busy} onClick={() => openApp(links.upi)}>Any UPI app</button>
             <button type="button" disabled={busy} onClick={() => openApp(links.gpay)}>Google Pay</button>
@@ -142,6 +163,16 @@ function PayPanel({ target, friends, setError, onPaid, onClose }) {
         </>
       )}
 
+      {back && (
+        <div className="card notify" style={{ marginTop: 16 }}>
+          <strong>Payment kiya? {rupee(amount)} to {target.friend}</strong>
+          <div className="actions">
+            <button className="small" type="button" disabled={busy} onClick={iPaid}>Haan, paid</button>
+            <button className="ghost" type="button" onClick={() => setBack(false)}>Nahi</button>
+          </div>
+        </div>
+      )}
+
       <label>UPI reference number (optional)</label>
       <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="12-digit UTR from your app" />
 
@@ -151,6 +182,42 @@ function PayPanel({ target, friends, setError, onPaid, onClose }) {
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
         <button className="small" type="button" disabled={busy} onClick={iPaid}>I paid</button>
         <button className="ghost" type="button" onClick={cancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function NewPay({ friends, onStart }) {
+  const [friend, setFriend] = useState("");
+  const [amt, setAmt] = useState("");
+  const ok = friend && Number(amt) > 0;
+  return (
+    <div className="card">
+      <h3>Pay someone</h3>
+      <label>Friend</label>
+      <select value={friend} onChange={(e) => setFriend(e.target.value)}>
+        <option value="">Choose a friend</option>
+        {friends.map((f) => (
+          <option key={f.id} value={f.name}>{f.name}</option>
+        ))}
+      </select>
+      <label>Amount (₹)</label>
+      <input
+        type="number"
+        inputMode="decimal"
+        value={amt}
+        onChange={(e) => setAmt(e.target.value)}
+        placeholder="500"
+      />
+      <div style={{ marginTop: 16 }}>
+        <button
+          className="small"
+          type="button"
+          disabled={!ok}
+          onClick={() => onStart(friend, Number(amt))}
+        >
+          Pay
+        </button>
       </div>
     </div>
   );
@@ -194,10 +261,34 @@ export default function PayPage({ entries, friends, reload, setError }) {
       setError(error.message);
       return false;
     }
-    const mine = entries
-      .filter((e) => (p.entry_ids || []).includes(e.id) && !e.shared)
-      .map((e) => e.id);
-    if (mine.length) await supabase.from("entries").update({ status: "Settled" }).in("id", mine);
+
+    if (p.entry_ids && p.entry_ids.length > 0) {
+      const mine = entries
+        .filter((e) => p.entry_ids.includes(e.id) && !e.shared)
+        .map((e) => e.id);
+      if (mine.length) await supabase.from("entries").update({ status: "Settled" }).in("id", mine);
+    } else {
+      const { data: u } = await supabase.auth.getUser();
+      const { data: row, error: entErr } = await supabase
+        .from("entries")
+        .insert({
+          user_id: u.user.id,
+          friend: p.friend_name,
+          amount: p.amount,
+          paid_by: "me",
+          status: "Settled",
+          payment_date: new Date().toISOString().slice(0, 10),
+          note: "Paid via UPI" + (p.payee_upi ? " to " + p.payee_upi : ""),
+        })
+        .select()
+        .single();
+      if (entErr) {
+        setError("Payment saved, but entry could not be added: " + entErr.message);
+      } else {
+        await supabase.from("app_payments").update({ entry_ids: [row.id] }).eq("id", p.id);
+      }
+    }
+
     setError("");
     setNotice("Payment saved in your history.");
     await reload();
@@ -222,7 +313,6 @@ export default function PayPage({ entries, friends, reload, setError }) {
     load();
   }
 
-  // What you owe: pending payments that a friend made for you
   const waiting = new Set(
     payments
       .filter((p) => p.user_id === myId && p.status === "paid")
@@ -238,7 +328,7 @@ export default function PayPage({ entries, friends, reload, setError }) {
   return (
     <>
       <h1>Pay</h1>
-      <p className="sub">Pay what you owe with your UPI app. Every payment is saved in your history.</p>
+      <p className="sub">Pay with your UPI app. Every payment is saved in your history.</p>
 
       {notice && (
         <div className="card notify">
@@ -259,6 +349,13 @@ export default function PayPage({ entries, friends, reload, setError }) {
             setTarget(null);
             load();
           }}
+        />
+      )}
+
+      {!target && (
+        <NewPay
+          friends={friends}
+          onStart={(friend, amount) => setTarget({ friend, entries: [], amount })}
         />
       )}
 
@@ -313,6 +410,7 @@ export default function PayPage({ entries, friends, reload, setError }) {
               </div>
               <div className="entry-meta">
                 {fmtDate(p.created_at)} · {statusLabel(p, incoming)}
+                {p.payee_upi && !incoming ? ` · ${p.payee_upi}` : ""}
                 {p.reference ? ` · Ref ${p.reference}` : ""}
               </div>
             </div>
