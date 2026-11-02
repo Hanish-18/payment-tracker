@@ -4,6 +4,7 @@ import QRSection from "./QRSection";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { getUpi, buildMessage, openWhatsApp, shareQR } from "./reminder";
 import Split from "./Split";
+   import AuthChoice from "./AuthChoice";
    import PaymentsHub from "./PaymentsHub";
    import SplitHub from "./SplitHub";
       import FriendScan from "./FriendScan";
@@ -33,7 +34,7 @@ export default function App() {
   }, []);
 
   if (loading) return <p style={{ padding: 40 }}>Loading...</p>;
-  return session ? <Shell session={session} /> : <Auth />;
+     return session ? <Shell session={session} /> : <AuthChoice emailForm={<Auth />} />;
 }
 
 function Auth() {

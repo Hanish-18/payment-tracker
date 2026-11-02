@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "./supabaseClient";
 import { openWhatsApp, syncUpi } from "./reminder";
+   import PhoneCard from "./PhoneCard";
    import { resizeImage } from "./imageTools";
 
    function oldResizeImage(file, max, type, quality) {
@@ -251,6 +252,7 @@ export default function ProfilePage({ session, profiles }) {
         {note("pw")}
       </div>
 
+         <PhoneCard session={session} />
       <form className="card" onSubmit={savePayment}>
         <h3>Payment details and QR</h3>
         <label>UPI ID</label>
