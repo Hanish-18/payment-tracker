@@ -1,6 +1,7 @@
 import { useState } from "react";
 import PaymentsPage from "./PaymentsPage";
 import PayPage from "./PayPage";
+import ChatBot from "./ChatBot";
 
 export default function PaymentsHub(props) {
   const [tab, setTab] = useState("payments");
@@ -15,6 +16,8 @@ export default function PaymentsHub(props) {
       </div>
 
       {tab === "payments" ? <PaymentsPage {...props} /> : <PayPage {...props} />}
+
+      <ChatBot entries={props.entries} friends={props.friends} />
     </>
   );
 }
