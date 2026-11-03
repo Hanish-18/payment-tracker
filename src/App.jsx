@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ThemeIcon } from "./ThemeToggle";
 import { supabase } from "./supabaseClient";
 import QRSection from "./QRSection";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -235,7 +236,10 @@ function Dashboard({ entries, session }) {
 
   return (
     <>
-      <h1>{name ? `Hi, ${name}` : "Dashboard"}</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+  <h1>{name ? `Hi, ${name}` : "Dashboard"}</h1>
+  <ThemeIcon />
+</div>
       <p className="sub">Here is where you stand with your friends.</p>
       <div className="stats">
         <div className="stat">

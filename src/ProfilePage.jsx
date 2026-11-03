@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ThemeSetting } from "./ThemeToggle";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "./supabaseClient";
 import { openWhatsApp, syncUpi } from "./reminder";
@@ -207,6 +208,7 @@ export default function ProfilePage({ session, profiles }) {
   return (
     <>
       <h1>Profile</h1>
+      <ThemeSetting />
       <p className="sub">Manage your account, payment details and QR code.</p>
 
       <div className="card">

@@ -1,0 +1,98 @@
+/* Dark theme: sirf tab lagta hai jab <html data-theme="dark"> ho */
+html[data-theme="dark"] { color-scheme: dark; }
+
+/* Page background */
+html[data-theme="dark"] body,
+html[data-theme="dark"] #root,
+html[data-theme="dark"] #root > *,
+html[data-theme="dark"] main,
+html[data-theme="dark"] .main,
+html[data-theme="dark"] .content,
+html[data-theme="dark"] .page {
+  background: #0b1220 !important;
+  color: #e5e7eb !important;
+}
+
+/* Text */
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4 { color: #f1f5f9 !important; }
+html[data-theme="dark"] p,
+html[data-theme="dark"] label,
+html[data-theme="dark"] .entry-name,
+html[data-theme="dark"] .entry-amount { color: #e5e7eb !important; }
+html[data-theme="dark"] .sub,
+html[data-theme="dark"] .entry-meta { color: #94a3b8 !important; }
+html[data-theme="dark"] a { color: #38bdf8; }
+
+/* Cards and rows */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .pt .card {
+  background: #111c2e !important;
+  border: 1px solid #1f2d44 !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+  color: #e5e7eb !important;
+}
+html[data-theme="dark"] .card h3,
+html[data-theme="dark"] .pt .card h3 { color: #f1f5f9 !important; }
+html[data-theme="dark"] .pt .card label { color: #cbd5e1; }
+html[data-theme="dark"] .entry { border-color: #1f2d44 !important; }
+html[data-theme="dark"] .badge { background: #1e293b !important; color: #cbd5e1 !important; }
+
+/* Inputs */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+  border-color: #334155 !important;
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder { color: #64748b; }
+
+/* Buttons */
+html[data-theme="dark"] .seg button {
+  background: #162238 !important;
+  color: #cbd5e1 !important;
+  border-color: #1f2d44 !important;
+}
+html[data-theme="dark"] .seg button.on {
+  background: #2f7a55 !important;
+  color: #fff !important;
+}
+html[data-theme="dark"] .ghost {
+  background: transparent !important;
+  color: #e5e7eb !important;
+  border-color: #334155 !important;
+}
+
+/* Paytm-style Pay page (paytm.css) */
+html[data-theme="dark"] .pt-list,
+html[data-theme="dark"] .pt-tile { background: #111c2e !important; }
+html[data-theme="dark"] .pt-tile { color: #e5e7eb !important; }
+html[data-theme="dark"] .pt-ico { background: #16324a !important; }
+html[data-theme="dark"] .pt-title,
+html[data-theme="dark"] .pt-name,
+html[data-theme="dark"] .pt-amt { color: #f1f5f9 !important; }
+html[data-theme="dark"] .pt-sub { color: #94a3b8 !important; }
+html[data-theme="dark"] .pt-row { border-color: #1f2d44 !important; }
+
+/* Chatbot aur Search: inka style component ke andar inline hai, isliye attribute se pakadte hain */
+html[data-theme="dark"] [style*="background: rgb(255, 255, 255)"] {
+  background: #111c2e !important;
+  color: #e5e7eb !important;
+}
+html[data-theme="dark"] [style*="background: rgb(244, 248, 251)"] { background: #0b1220 !important; }
+html[data-theme="dark"] [style*="color: rgb(15, 23, 42)"] { color: #e5e7eb !important; }
+html[data-theme="dark"] [style*="border-bottom: 1px solid rgb(238, 242, 247)"] { border-color: #1f2d44 !important; }
+html[data-theme="dark"] [style*="color: rgb(100, 116, 139)"] { color: #94a3b8 !important; }
+html[data-theme="dark"] .stat {
+  background: #111c2e !important;
+  border: 1px solid #1f2d44 !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+}
+html[data-theme="dark"] .stat .label { color: #94a3b8 !important; }
+html[data-theme="dark"] .stat .value { color: #f1f5f9 !important; }
+html[data-theme="dark"] .stat .value.pos { color: #4ade80 !important; }
+html[data-theme="dark"] .stat .value.neg { color: #f87171 !important; }
