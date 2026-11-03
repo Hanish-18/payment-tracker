@@ -3,6 +3,7 @@ import { ThemeSetting } from "./ThemeToggle";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "./supabaseClient";
 import { openWhatsApp, syncUpi } from "./reminder";
+   import DeleteAccount from "./DeleteAccount";
    import PhoneCard from "./PhoneCard";
    import { resizeImage } from "./imageTools";
 
@@ -315,6 +316,7 @@ export default function ProfilePage({ session, profiles }) {
         </div>
       </div>
 
+         <DeleteAccount session={session} />
       <button className="ghost" style={{ marginTop: 24 }}
         onClick={() => supabase.auth.signOut()}>
         Log out
