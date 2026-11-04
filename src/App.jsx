@@ -1,24 +1,73 @@
-import { useState, useEffect } from "react";
-import { ThemeIcon } from "./ThemeToggle";
-import { supabase } from "./supabaseClient";
-import QRSection from "./QRSection";
+import { useState, useEffect, useRef } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { getUpi, buildMessage, openWhatsApp, shareQR } from "./reminder";
-import Split from "./Split";
-   import AuthChoice from "./AuthChoice";
-   import PaymentsHub from "./PaymentsHub";
-   import SplitHub from "./SplitHub";
-      import FriendScan from "./FriendScan";
-         import InviteClaim from "./InviteClaim";
-   import PaymentsPage from "./PaymentsPage";
-   import ProfilePage from "./ProfilePage";
-   import "./room.css";
-const MODES = ["Card", "UPI", "Cash", "Other"];
-const PAGES = ["Dashboard", "Payments", "Friends", "Split", "Profile"];
-const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
-const todayLocal = () => new Date().toLocaleDateString("en-CA");
-const sumAmt = (list) => list.reduce((s, e) => s + Number(e.amount), 0);
+import { supabase } from "./supabaseClient";
+import { setTheme, useTheme } from "./ThemeToggle";
+import { ForgotLink } from "./Recovery";
+import SpDashboard from "./Dashboard";
+import AuthChoice from "./AuthChoice";
+import PaymentsHub from "./PaymentsHub";
+import SplitHub from "./SplitHub";
+import PayPage from "./PayPage";
+import FriendScan from "./FriendScan";
+import InviteClaim from "./InviteClaim";
+import ProfilePage from "./ProfilePage";
+import "./room.css";
+import "./shell.css";
 
+const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
+const sumAmt = (list) => list.reduce((s, e) => s + Number(e.amount), 0);
+const nameOfUser = (session) => {
+  const m = session.user.user_metadata || {};
+  return m.name || m.full_name || (session.user.email || "").split("@")[0] || "there";
+};
+
+/* ---------- Sidebar pages ---------- */
+const NAV = [
+  ["Dashboard", "Dashboard", "Track expenses, split bills, and settle easily.", "home"],
+  ["Groups", "Groups", "Friends and people you split with.", "users"],
+  ["Expenses", "Expenses", "Add and split expenses.", "receipt"],
+  ["Settlements", "Settlements", "Clear your dues in one tap.", "swap"],
+  ["Payments", "Payments", "Record payments and see your history.", "card"],
+  ["Analytics", "Analytics", "See where your money goes.", "chart"],
+];
+const PROFILE_META = ["Profile", "Your account and settings."];
+const GO = {
+  add: "Expenses", groups: "Groups", scan: "Settlements", share: "Groups",
+  expenses: "Expenses", friends: "Groups", pay: "Settlements",
+};
+
+const ICONS = {
+  home: <path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+  users: (<><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" /><circle cx="17" cy="9" r="2.5" /><path d="M17 14c2.8 0 4.5 1.8 4.5 4.5" /></>),
+  receipt: (<><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" /><path d="M9 8h6M9 12h6" /></>),
+  swap: <path d="M4 8h14l-3-3M20 16H6l3 3" />,
+  card: (<><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M3 10h18" /></>),
+  chart: <path d="M5 20V10M12 20V4M19 20v-7" />,
+  bell: (<><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 21h4" /></>),
+  search: (<><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></>),
+  phone: (<><rect x="7" y="3" width="10" height="18" rx="2" /><path d="M11 18h2" /></>),
+};
+function Icon({ name, size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {ICONS[name]}
+    </svg>
+  );
+}
+
+function useOutside(ref, fn) {
+  useEffect(() => {
+    const h = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) fn();
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+}
+
+/* ---------- App (login check) ---------- */
 export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,9 +84,10 @@ export default function App() {
   }, []);
 
   if (loading) return <p style={{ padding: 40 }}>Loading...</p>;
-     return session ? <Shell session={session} /> : <AuthChoice emailForm={<Auth />} />;
+  return session ? <Shell session={session} /> : <AuthChoice emailForm={<Auth />} />;
 }
 
+/* ---------- Email login / signup ---------- */
 function Auth() {
   const [mode, setMode] = useState("signup");
   const [name, setName] = useState("");
@@ -91,6 +141,7 @@ function Auth() {
             {busy ? "Please wait..." : mode === "signup" ? "Create account" : "Log in"}
           </button>
         </form>
+        {mode === "login" && <ForgotLink />}
         <p className="switch">
           {mode === "signup" ? "Already have an account? " : "New here? "}
           <button className="link" type="button"
@@ -103,9 +154,135 @@ function Auth() {
   );
 }
 
+/* ---------- Top bar pieces ---------- */
+function TopSearch({ entries, friends, go }) {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const inputRef = useRef(null);
+  useOutside(ref, () => setOpen(false));
+
+  useEffect(() => {
+    const k = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (inputRef.current) inputRef.current.focus();
+      }
+    };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, []);
+
+  const t = q.trim().toLowerCase();
+  const fr = t ? friends.filter((f) => f.name.toLowerCase().includes(t)).slice(0, 3) : [];
+  const en = t
+    ? entries
+        .filter((e) => [e.friend, e.note, e.amount].join(" ").toLowerCase().includes(t))
+        .slice(0, 4)
+    : [];
+  function pick(page) {
+    setOpen(false);
+    setQ("");
+    go(page);
+  }
+
+  return (
+    <div className="sp-search" ref={ref}>
+      <Icon name="search" size={18} />
+      <input
+        ref={inputRef}
+        value={q}
+        onChange={(e) => { setQ(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder="Search friends, expenses or payments..."
+      />
+      <kbd>⌘ K</kbd>
+      {open && t && (
+        <div className="sp-pop">
+          {fr.length === 0 && en.length === 0 && <div className="none">Nothing found.</div>}
+          {fr.length > 0 && <div className="hd">Friends</div>}
+          {fr.map((f) => (
+            <button key={"f" + f.id} type="button" onClick={() => pick("Groups")}>{f.name}</button>
+          ))}
+          {en.length > 0 && <div className="hd">Payments</div>}
+          {en.map((e) => (
+            <button key={"e" + e.id} type="button" onClick={() => pick("Payments")}>
+              {e.friend} · {rupee(e.amount)}
+              <small>{e.note || e.mode || ""}</small>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Bell({ requests, owes, go }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useOutside(ref, () => setOpen(false));
+  const has = requests > 0 || owes.length > 0;
+  function pick(page) {
+    setOpen(false);
+    go(page);
+  }
+  return (
+    <div className="sp-ib" ref={ref}>
+      <button type="button" className="sp-bell" aria-label="Notifications" onClick={() => setOpen(!open)}>
+        <Icon name="bell" />
+        {has && <span className="sp-dot" />}
+      </button>
+      {open && (
+        <div className="sp-pop">
+          {!has && <div className="none">You are all caught up.</div>}
+          {requests > 0 && (
+            <button type="button" onClick={() => pick("Groups")}>
+              {requests} friend request{requests > 1 ? "s" : ""}
+              <small>Tap to review</small>
+            </button>
+          )}
+          {owes.map((e) => (
+            <button key={e.id} type="button" onClick={() => pick("Settlements")}>
+              You owe {e.friend} {rupee(e.amount)}
+              <small>{e.note || "Pending payment"}</small>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProfileMenu({ name, go }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { dark } = useTheme();
+  useOutside(ref, () => setOpen(false));
+  return (
+    <div className="sp-ib" ref={ref}>
+      <button type="button" className="sp-user" onClick={() => setOpen(!open)}>
+        <span className="sp-avatar">{name.trim().charAt(0).toUpperCase()}</span>
+        <span className="nm">{name}</span>
+        <span className="cv">▾</span>
+      </button>
+      {open && (
+        <div className="sp-pop">
+          <button type="button" onClick={() => { setOpen(false); go("Profile"); }}>Profile</button>
+          <button type="button" onClick={() => setTheme(dark ? "light" : "dark")}>
+            {dark ? "☀️ Light mode" : "🌙 Dark mode"}
+          </button>
+          <button type="button" onClick={() => supabase.auth.signOut()}>Log out</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Shell: data + layout ---------- */
 function Shell({ session }) {
   const myId = session.user.id;
-  const [page, setPage] = useState("Payments");
+  const myName = nameOfUser(session);
+  const [page, setPage] = useState("Dashboard");
   const [entries, setEntries] = useState([]);
   const [friends, setFriends] = useState([]);
   const [connections, setConnections] = useState([]);
@@ -160,323 +337,119 @@ function Shell({ session }) {
     return () => window.removeEventListener("focus", onFocus);
   }, [session.access_token]);
 
+  const requests = connections.filter((c) => c.status === "pending" && c.addressee === myId).length;
+  const owes = entries.filter((e) => e.status !== "Settled" && e.paid_by === "friend").slice(0, 3);
+  const meta = NAV.find((n) => n[0] === page) || [null, PROFILE_META[0], PROFILE_META[1]];
+
   return (
-    <div className="layout">
-      <aside className="sidebar">
-        <div className="brand">SplitPay</div>
-        <nav>
-          {PAGES.map((p) => (
-            <button key={p}
-              className={"nav" + (page === p ? " active" : "")}
-              onClick={() => setPage(p)}>
-              {p}
+    <div className="sp-shell">
+      <aside className="sp-side">
+        <div className="sp-logo">
+          <span className="sp-logo-ic">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
+              <rect x="3.5" y="9" width="11" height="11" rx="3" /><rect x="9.5" y="3.5" width="11" height="11" rx="3" />
+            </svg>
+          </span>
+          <span>Split<b>Pay</b></span>
+        </div>
+
+        <nav className="sp-nav">
+          {NAV.map(([key, label, , icon]) => (
+            <button key={key} type="button" className={page === key ? "on" : ""} onClick={() => setPage(key)}>
+              <Icon name={icon} />
+              {label}
             </button>
           ))}
         </nav>
-        <button className="ghost logout" onClick={() => supabase.auth.signOut()}>
-          Log out
-        </button>
+
+        <div className="sp-app">
+          <b><Icon name="phone" /> Get the App</b>
+          <small>Scan QR to download SplitPay mobile app</small>
+          <span className="sp-qrbox"><QRCodeSVG value={window.location.origin} size={92} /></span>
+        </div>
+
+        <svg className="sp-mtn" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 120V70L50 30l35 40 40-55 45 60 30-20 40 40v55z" fill="#b9a2f6" opacity=".55" />
+          <path d="M0 120V92l40-30 40 34 50-45 60 50 50-24v43z" fill="#8f63ee" />
+        </svg>
       </aside>
 
-      <main className="main">
-        {error && <p className="error">{error}</p>}
-        {page === "Dashboard" && <Dashboard entries={entries} session={session} />}
-        {page === "Payments" && (
-             <PaymentsHub
-            entries={entries}
-            friends={friends}
-            reload={load}
-            setError={setError}
-            goFriends={() => setPage("Friends")}
-            myName={session.user.user_metadata?.name}
-          />
-        )}
-        {page === "Friends" && (
-          <Friends
-            friends={friends}
-            connections={connections}
-            profiles={profiles}
-            entries={entries}
-            myId={myId}
-            reload={load}
-            setError={setError}
-          />
-        )}
-        {page === "Split" && (
-          <>
-            <h1>Split</h1>
-               <SplitHub
+      <div className="sp-body">
+        <header className="sp-top">
+          <div className="sp-ttl">
+            <h1>{meta[1]}</h1>
+            <p className="sp-sub">{meta[2]}</p>
+          </div>
+          <TopSearch entries={entries} friends={friends} go={setPage} />
+          <Bell requests={requests} owes={owes} go={setPage} />
+          <ProfileMenu name={myName} go={setPage} />
+        </header>
+
+        <main className="sp-content">
+          {error && <p className="error">{error}</p>}
+
+          {page === "Dashboard" && (
+            <SpDashboard
+              entries={entries}
+              friends={friends}
+              name={myName}
+              onNavigate={(key) => setPage(GO[key] || "Dashboard")}
+            />
+          )}
+
+          {page === "Groups" && (
+            <Friends
+              friends={friends}
+              connections={connections}
+              profiles={profiles}
+              entries={entries}
+              myId={myId}
+              reload={load}
+              setError={setError}
+            />
+          )}
+
+          {page === "Expenses" && (
+            <SplitHub
               entries={entries}
               friends={friends}
               reload={load}
               setError={setError}
-              goFriends={() => setPage("Friends")}
-              myName={session.user.user_metadata?.name}
+              goFriends={() => setPage("Groups")}
+              myName={myName}
             />
-          </>
-        )}
-           {page === "Profile" && <ProfilePage session={session} profiles={profiles} />}
-      </main>
+          )}
+
+          {page === "Settlements" && (
+            <PayPage entries={entries} friends={friends} reload={load} setError={setError} />
+          )}
+
+          {page === "Payments" && (
+            <PaymentsHub
+              entries={entries}
+              friends={friends}
+              reload={load}
+              setError={setError}
+              goFriends={() => setPage("Groups")}
+              myName={myName}
+            />
+          )}
+
+          {page === "Analytics" && (
+            <>
+              <SpendingChart entries={entries} />
+              <PaidSummary entries={entries} />
+            </>
+          )}
+
+          {page === "Profile" && <ProfilePage session={session} profiles={profiles} />}
+        </main>
+      </div>
     </div>
   );
 }
 
-function Dashboard({ entries, session }) {
-  const name = session.user.user_metadata?.name;
-  const map = {};
-  entries
-    .filter((e) => e.status !== "Settled")
-    .forEach((e) => {
-      const amt = Number(e.amount) * (e.paid_by === "friend" ? -1 : 1);
-      map[e.friend] = (map[e.friend] || 0) + amt;
-    });
-  const rows = Object.entries(map).filter(([, v]) => v !== 0);
-  const owedToYou = rows.reduce((s, [, v]) => (v > 0 ? s + v : s), 0);
-  const youOwe = rows.reduce((s, [, v]) => (v < 0 ? s - v : s), 0);
-
-  return (
-    <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-  <h1>{name ? `Hi, ${name}` : "Dashboard"}</h1>
-  <ThemeIcon />
-</div>
-      <p className="sub">Here is where you stand with your friends.</p>
-      <div className="stats">
-        <div className="stat">
-          <div className="label">Friends owe you</div>
-          <div className="value pos">{rupee(owedToYou)}</div>
-        </div>
-        <div className="stat">
-          <div className="label">You owe</div>
-          <div className="value neg">{rupee(youOwe)}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Net</div>
-          <div className="value">{rupee(owedToYou - youOwe)}</div>
-        </div>
-      </div>
-      <SpendingChart entries={entries} />
-      <PaidSummary entries={entries} />
-      <h2>Balances</h2>
-      {rows.length === 0 && <p className="sub">All settled up.</p>}
-      {rows.map(([friend, v]) => (
-        <div className="entry" key={friend}>
-          <div className="entry-name">{friend}</div>
-          <div className={"entry-amount " + (v > 0 ? "pos" : "neg")}>
-            {v > 0 ? `owes you ${rupee(v)}` : `you owe ${rupee(-v)}`}
-          </div>
-        </div>
-      ))}
-    </>
-  );
-}
-
-function Payments({ entries, friends, reload, setError, goFriends, myName }) {
-  const [friend, setFriend] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(todayLocal());
-  const [due, setDue] = useState("");
-  const [note, setNote] = useState("");
-  const [paidBy, setPaidBy] = useState("me");
-  const [mode, setMode] = useState("UPI");
-  const [filter, setFilter] = useState("All");
-  const [lastAdded, setLastAdded] = useState(null);
-
-  async function add(e) {
-    e.preventDefault();
-    if (!friend || !amount) return;
-    const { data, error } = await supabase
-      .from("entries")
-      .insert({
-        friend,
-        amount: Number(amount),
-        note,
-        mode,
-        paid_by: paidBy,
-        payment_date: date,
-        due_date: due || null,
-      })
-      .select()
-      .single();
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setError("");
-    setAmount("");
-    setNote("");
-    setDue("");
-    await reload();
-    setLastAdded(paidBy === "me" ? { id: data.id } : null);
-  }
-
-  function remind(en) {
-    const f = friends.find((x) => x.name === en.friend);
-    const text = buildMessage({ friend: en.friend, entries, entry: en, myName });
-    openWhatsApp(f && f.phone, text);
-  }
-
-  async function sendQR() {
-    const upi = getUpi();
-    if (!upi.id) {
-      setError("First save your UPI ID in Profile.");
-      return;
-    }
-    await shareQR(upi.id, upi.name);
-  }
-
-  async function toggle(en) {
-    await supabase
-      .from("entries")
-      .update({ status: en.status === "Settled" ? "Pending" : "Settled" })
-      .eq("id", en.id);
-    reload();
-  }
-
-  async function remove(id) {
-    await supabase.from("entries").delete().eq("id", id);
-    reload();
-  }
-
-  const added = lastAdded && entries.find((x) => x.id === lastAdded.id);
-  const shown = entries.filter((e) => filter === "All" || e.mode === filter);
-  const total = sumAmt(shown);
-
-  return (
-    <>
-      <h1>Payments</h1>
-      <p className="sub">Record payments and keep track of what you owe each other.</p>
-
-      {added && (
-        <div className="card notify">
-          <h3>Payment added ✅</h3>
-          <p className="sub" style={{ margin: "8px 0 0" }}>
-            Send {added.friend} a reminder on WhatsApp?
-          </p>
-          <div className="actions">
-            <button className="small" onClick={() => remind(added)}>
-              Send on WhatsApp
-            </button>
-            <button className="ghost" onClick={sendQR}>Get QR image</button>
-            <button className="ghost" onClick={() => setLastAdded(null)}>Dismiss</button>
-          </div>
-        </div>
-      )}
-
-      <form className="card" onSubmit={add}>
-        <h3>Add a payment</h3>
-
-        <label>Friend</label>
-        <select value={friend} onChange={(e) => setFriend(e.target.value)} required>
-          <option value="">Select a friend</option>
-          {friends.map((f) => (
-            <option key={f.id} value={f.name}>{f.name}</option>
-          ))}
-        </select>
-        {friends.length === 0 && (
-          <p className="sub" style={{ marginTop: 8, marginBottom: 0 }}>
-            No friends yet.{" "}
-            <button type="button" className="link" onClick={goFriends}>
-              Add a friend first
-            </button>
-          </p>
-        )}
-
-        <div className="row2">
-          <div>
-            <label>Amount (₹)</label>
-            <input type="number" placeholder="500" value={amount}
-              onChange={(e) => setAmount(e.target.value)} required />
-          </div>
-          <div>
-            <label>Payment date</label>
-            <input type="date" value={date}
-              onChange={(e) => setDate(e.target.value)} required />
-          </div>
-        </div>
-
-        <label>Pay me back by (optional)</label>
-        <input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
-
-        <label>Description</label>
-        <input placeholder="Lunch, movie tickets, cab..." value={note}
-          onChange={(e) => setNote(e.target.value)} />
-
-        <label>Who paid?</label>
-        <div className="seg">
-          <button type="button" className={paidBy === "me" ? "on" : ""}
-            onClick={() => setPaidBy("me")}>I paid</button>
-          <button type="button" className={paidBy === "friend" ? "on" : ""}
-            onClick={() => setPaidBy("friend")}>Friend paid</button>
-        </div>
-
-        <label>Paid via</label>
-        <div className="seg">
-          {MODES.map((m) => (
-            <button key={m} type="button" className={mode === m ? "on" : ""}
-              onClick={() => setMode(m)}>{m}</button>
-          ))}
-        </div>
-
-        <button className="primary" type="submit">Add Payment</button>
-      </form>
-
-      <h2>Payment history</h2>
-      <div className="tabs">
-        {["All", ...MODES].map((m) => (
-          <button key={m}
-            className={"tab" + (filter === m ? " active" : "")}
-            onClick={() => setFilter(m)}>
-            {m}
-          </button>
-        ))}
-      </div>
-      <p className="sub" style={{ marginTop: 16, marginBottom: 0 }}>
-        {filter} total: {rupee(total)}
-      </p>
-
-      {shown.length === 0 && <p className="sub">No payments here yet.</p>}
-      {shown.map((en) => (
-        <div className={"entry" + (en.status === "Settled" ? " settled" : "")} key={en.id}>
-          <div>
-            <div className="entry-name">{en.friend}</div>
-            <div className="entry-meta">
-              {new Date(en.payment_date).toLocaleDateString("en-IN")} · {en.mode}
-              {en.note ? ` · ${en.note}` : ""}
-              {en.due_date
-                ? ` · Due ${new Date(en.due_date + "T00:00:00").toLocaleDateString("en-IN")}`
-                : ""}
-            </div>
-          </div>
-          <div className="entry-right">
-            <div className={"entry-amount " + (en.paid_by === "me" ? "pos" : "neg")}>
-              {en.paid_by === "me" ? "You paid " : `${en.friend} paid `}
-              {rupee(en.amount)}
-            </div>
-            {en.paid_by === "me" && en.status !== "Settled" && (
-              <>
-                <button className="remind" onClick={() => remind(en)}>Remind</button>
-                {" · "}
-              </>
-            )}
-            {en.shared ? (
-              <span className="entry-meta">Added by {en.friend}</span>
-            ) : (
-              <>
-                <button className="del muted" onClick={() => toggle(en)}>
-                  {en.status === "Settled" ? "Mark pending" : "Mark settled"}
-                </button>
-                {" · "}
-                <button className="del" onClick={() => remove(en.id)}>Delete</button>
-              </>
-            )}
-          </div>
-        </div>
-      ))}
-    </>
-  );
-}
-
+/* ---------- Friends / Groups page ---------- */
 function Friends({ friends, connections, profiles, entries, myId, reload, setError }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -586,7 +559,7 @@ function Friends({ friends, connections, profiles, entries, myId, reload, setErr
         </div>
 
         <h2>History</h2>
-        {list.length === 0 && <p className="sub">No payments with {selected.name} yet.</p>}
+        {list.length === 0 && <p className="sub" style={{ display: "block" }}>No payments with {selected.name} yet.</p>}
         {list.map((en) => (
           <div className={"entry" + (en.status === "Settled" ? " settled" : "")} key={en.id}>
             <div>
@@ -632,8 +605,8 @@ function Friends({ friends, connections, profiles, entries, myId, reload, setErr
         </div>
       )}
 
-            <InviteClaim reload={reload} setError={setError} />
-         <FriendScan profiles={profiles} myId={myId} reload={reload} setError={setError} />
+      <InviteClaim reload={reload} setError={setError} />
+      <FriendScan profiles={profiles} myId={myId} reload={reload} setError={setError} />
       <form className="card" onSubmit={sendRequest}>
         <h3>Add a friend by SplitPay ID</h3>
         <label>Their ID</label>
@@ -674,7 +647,7 @@ function Friends({ friends, connections, profiles, entries, myId, reload, setErr
       <h2>Your friends</h2>
       <input placeholder="Search by name" value={query}
         onChange={(e) => setQuery(e.target.value)} />
-      {shownFriends.length === 0 && <p className="sub">No friends found.</p>}
+      {shownFriends.length === 0 && <p className="sub" style={{ display: "block" }}>No friends found.</p>}
       {shownFriends.map((f) => (
         <div className="entry row-click" key={f.id} onClick={() => setSelectedId(f.id)}>
           <div>
@@ -705,57 +678,8 @@ function Friends({ friends, connections, profiles, entries, myId, reload, setErr
   );
 }
 
-function Profile({ session, profiles }) {
-  const me = profiles.find((p) => p.id === session.user.id);
-  const code = me ? me.friend_code : "";
-  const [copied, setCopied] = useState(false);
-
-  function copy() {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }
-
-  function share() {
-    openWhatsApp(
-      null,
-      `Add me on SplitPay! My ID is ${code}. Open Friends and paste my ID.`
-    );
-  }
-
-  return (
-    <>
-      <h1>Profile</h1>
-      <p className="sub">
-        {session.user.user_metadata?.name || "Your account"} · {session.user.email}
-      </p>
-
-      <div className="card">
-        <h3>Your SplitPay ID</h3>
-        <p className="sub" style={{ margin: "8px 0 0" }}>
-          Share this with friends so they can connect with you.
-        </p>
-        <div className="idbox">{code || "..."}</div>
-        <div className="actions" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="small" onClick={copy} disabled={!code}>
-            {copied ? "Copied!" : "Copy ID"}
-          </button>
-          <button className="ghost" onClick={share} disabled={!code}>
-            Share on WhatsApp
-          </button>
-        </div>
-      </div>
-
-      <QRSection />
-      <button className="ghost" style={{ marginTop: 24 }}
-        onClick={() => supabase.auth.signOut()}>
-        Log out
-      </button>
-    </>
-  );
-}
-
-        const COLORS = ["#3fdc8c", "#2f9aa6", "#3b9fcb", "#5df2a2", "#ffd166", "#ff9bb0", "#8aa7ff"];
+/* ---------- Analytics ---------- */
+const COLORS = ["#7c5cf0", "#2f8cf5", "#f59e3a", "#3ccf91", "#ef6a8a", "#14b8a6", "#8aa7ff"];
 
 function SpendingChart({ entries }) {
   const [by, setBy] = useState("mode");
@@ -778,7 +702,7 @@ function SpendingChart({ entries }) {
       </div>
 
       {data.length === 0 ? (
-        <p className="sub" style={{ marginTop: 16 }}>Add payments to see the chart.</p>
+        <p className="sub" style={{ marginTop: 16, display: "block" }}>Add payments to see the chart.</p>
       ) : (
         <div style={{ width: "100%", height: 320, marginTop: 8 }}>
           <ResponsiveContainer>
@@ -820,7 +744,7 @@ function PaidSummary({ entries }) {
   const sum = (list) => list.reduce((s, [, v]) => s + v.total, 0);
 
   function List({ list, cls }) {
-    if (list.length === 0) return <p className="sub">No payments yet.</p>;
+    if (list.length === 0) return <p className="sub" style={{ display: "block" }}>No payments yet.</p>;
     return list.map(([name, v]) => (
       <div className="entry" key={name}>
         <div>
@@ -838,14 +762,14 @@ function PaidSummary({ entries }) {
     <div className="two-col">
       <div className="card">
         <h3>You paid for</h3>
-        <p className="sub" style={{ marginBottom: 8 }}>
+        <p className="sub" style={{ marginBottom: 8, display: "block" }}>
           {mine.length} friend{mine.length === 1 ? "" : "s"} · total {rupee(sum(mine))}
         </p>
         <List list={mine} cls="pos" />
       </div>
       <div className="card">
         <h3>Paid for you</h3>
-        <p className="sub" style={{ marginBottom: 8 }}>
+        <p className="sub" style={{ marginBottom: 8, display: "block" }}>
           {theirs.length} friend{theirs.length === 1 ? "" : "s"} · total {rupee(sum(theirs))}
         </p>
         <List list={theirs} cls="neg" />
