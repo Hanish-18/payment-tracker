@@ -14,6 +14,8 @@ import ProfilePage from "./ProfilePage";
 import "./room.css";
 import "./shell.css";
 import "./mobile.css";
+import "./mobile-ui.css";
+import MobileHome from "./MobileHome";
 
 const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
 const sumAmt = (list) => list.reduce((s, e) => s + Number(e.amount), 0);
@@ -47,6 +49,9 @@ const ICONS = {
   bell: (<><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 21h4" /></>),
   search: (<><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></>),
   phone: (<><rect x="7" y="3" width="10" height="18" rx="2" /><path d="M11 18h2" /></>),
+  clock: (<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>),
+  user: (<><circle cx="12" cy="8" r="3.6" /><path d="M5 20c0-3.8 3-6 7-6s7 2.2 7 6" /></>),
+  plus: <path d="M12 5v14M5 12h14" />,
 };
 function Icon({ name, size = 20 }) {
   return (
@@ -55,6 +60,23 @@ function Icon({ name, size = 20 }) {
       {ICONS[name]}
     </svg>
   );
+}
+
+const firstName = (n) => {
+  const w = String(n || "").trim().split(/\s+/)[0] || "there";
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+};
+
+function useIsPhone() {
+  const q = "(max-width: 900px)";
+  const [m, setM] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(q);
+    const h = () => setM(mq.matches);
+    mq.addEventListener("change", h);
+    return () => mq.removeEventListener("change", h);
+  }, []);
+  return m;
 }
 
 function useOutside(ref, fn) {
@@ -274,7 +296,7 @@ function ProfileMenu({ name, go }) {
       {open && (
         <div className="sp-pop">
           <button type="button" onClick={() => pick("Profile")}>Profile</button>
-          <button type="button" className="only-m" onClick={() => pick("Payments")}>Payments</button>
+          <button type="button" className="only-m" onClick={() => pick("Settlements")}>Settlements</button>
           <button type="button" className="only-m" onClick={() => pick("Analytics")}>Analytics</button>
           <button type="button" onClick={() => setTheme(dark ? "light" : "dark")}>
             {dark ? "☀️ Light mode" : "🌙 Dark mode"}
@@ -296,6 +318,7 @@ function Shell({ session }) {
   const [connections, setConnections] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [error, setError] = useState("");
+  const phone = useIsPhone();
 
   async function load() {
     const [e, f, c, p] = await Promise.all([
@@ -349,6 +372,105 @@ function Shell({ session }) {
   const owes = entries.filter((e) => e.status !== "Settled" && e.paid_by === "friend").slice(0, 3);
   const meta = NAV.find((n) => n[0] === page) || [null, PROFILE_META[0], PROFILE_META[1]];
   const home = page === "Dashboard";
+
+  const pageBlocks = (
+    <>
+          {page === "Groups" && (
+            <Friends
+              friends={friends}
+              connections={connections}
+              profiles={profiles}
+              entries={entries}
+              myId={myId}
+              reload={load}
+              setError={setError}
+            />
+          )}
+
+          {page === "Expenses" && (
+            <SplitHub
+              entries={entries}
+              friends={friends}
+              reload={load}
+              setError={setError}
+              goFriends={() => setPage("Groups")}
+              myName={myName}
+            />
+          )}
+
+          {page === "Settlements" && (
+            <PayPage entries={entries} friends={friends} reload={load} setError={setError} />
+          )}
+
+          {page === "Payments" && (
+            <PaymentsHub
+              entries={entries}
+              friends={friends}
+              reload={load}
+              setError={setError}
+              goFriends={() => setPage("Groups")}
+              myName={myName}
+            />
+          )}
+
+          {page === "Analytics" && (
+            <>
+              <SpendingChart entries={entries} />
+              <PaidSummary entries={entries} />
+            </>
+          )}
+
+          {page === "Profile" && <ProfilePage session={session} profiles={profiles} />}
+    </>
+  );
+
+  if (phone) {
+    const tabs = [
+      ["Dashboard", "home", "Home"],
+      ["Groups", "users", "Groups"],
+      ["Expenses", "plus", ""],
+      ["Payments", "clock", "Activity"],
+      ["Profile", "user", "Profile"],
+    ];
+    return (
+      <div className="mb-app">
+        <header className="mb-top">
+          <div className="mb-ttl">
+            {home ? (
+              <>
+                <h1>Hi, {firstName(myName)} 👋</h1>
+                <p>Let's split something?</p>
+              </>
+            ) : (
+              <h1>{meta[1]}</h1>
+            )}
+          </div>
+          <Bell requests={requests} owes={owes} go={setPage} />
+          <ProfileMenu name={myName} go={setPage} />
+        </header>
+
+        <main className="sp-content mb-content">
+          {error && <p className="error">{error}</p>}
+          {home ? <MobileHome entries={entries} go={setPage} /> : pageBlocks}
+        </main>
+
+        <nav className="mb-nav">
+          {tabs.map(([key, icon, label]) =>
+            key === "Expenses" ? (
+              <button key={key} type="button" className="mb-plus" aria-label="Add expense" onClick={() => setPage("Expenses")}>
+                <span className="c"><Icon name="plus" size={26} /></span>
+              </button>
+            ) : (
+              <button key={key} type="button" className={page === key ? "on" : ""} onClick={() => setPage(key)}>
+                <Icon name={icon} size={22} />
+                <span>{label}</span>
+              </button>
+            )
+          )}
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <div className="sp-shell">
@@ -419,52 +541,7 @@ function Shell({ session }) {
             />
           )}
 
-          {page === "Groups" && (
-            <Friends
-              friends={friends}
-              connections={connections}
-              profiles={profiles}
-              entries={entries}
-              myId={myId}
-              reload={load}
-              setError={setError}
-            />
-          )}
-
-          {page === "Expenses" && (
-            <SplitHub
-              entries={entries}
-              friends={friends}
-              reload={load}
-              setError={setError}
-              goFriends={() => setPage("Groups")}
-              myName={myName}
-            />
-          )}
-
-          {page === "Settlements" && (
-            <PayPage entries={entries} friends={friends} reload={load} setError={setError} />
-          )}
-
-          {page === "Payments" && (
-            <PaymentsHub
-              entries={entries}
-              friends={friends}
-              reload={load}
-              setError={setError}
-              goFriends={() => setPage("Groups")}
-              myName={myName}
-            />
-          )}
-
-          {page === "Analytics" && (
-            <>
-              <SpendingChart entries={entries} />
-              <PaidSummary entries={entries} />
-            </>
-          )}
-
-          {page === "Profile" && <ProfilePage session={session} profiles={profiles} />}
+          {pageBlocks}
         </main>
       </div>
 
