@@ -1,10 +1,12 @@
 /* Phone "Payments" flow (matches the mockup):
    Payments home  ->  Add Payment form  ->  Payment Details
+   Pay Now / Scan UPI open the Pay via UPI flow (MobileUpi).
    The old PaymentsHub (full history, reminders) opens from "See All" and "Request". */
 import { useState } from "react";
 import "./mobile-payments.css";
 import { supabase } from "./supabaseClient";
 import { hue, ini } from "./DesktopHome";
+import MobileUpi from "./MobileUpi";
 
 const money = (n) => "₹" + Math.abs(Number(n)).toLocaleString("en-IN");
 const dtext = (x) => new Date(x).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -314,6 +316,26 @@ export default function MobilePayments({ entries, friends, go, reload, setError,
   const [view, setView] = useState({ t: "hub" });
   const [flash, setFlash] = useState("");
 
+  if (view.t === "upi") {
+    return (
+      <MobileUpi
+        key={view.start}
+        start={view.start}
+        header={header}
+        go={go}
+        myId={myId}
+        setError={setError}
+        onBack={() => setView({ t: "hub" })}
+        onSaved={() => {
+          reload();
+          setView({ t: "hub" });
+          setFlash("Payment saved ✓");
+          setTimeout(() => setFlash(""), 2500);
+        }}
+      />
+    );
+  }
+
   if (view.t === "add") {
     return (
       <AddPayment
@@ -371,9 +393,9 @@ export default function MobilePayments({ entries, friends, go, reload, setError,
 
   const actions = [
     ["plus", "Add Payment", () => setView({ t: "add" }), true],
-    ["send", "Pay Now", () => go("Settlements")],
+    ["send", "Pay Now", () => setView({ t: "upi", start: "hub" })],
     ["down", "Request", () => setView({ t: "all" })],
-    ["qr", "Scan UPI", () => go("Settlements")],
+    ["qr", "Scan UPI", () => setView({ t: "upi", start: "scan" })],
   ];
 
   return (
