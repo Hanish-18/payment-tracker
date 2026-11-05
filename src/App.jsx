@@ -473,10 +473,10 @@ function Shell({ session }) {
   );
 
   if (phone) {
-    /* Bottom bar: Home, Split, Groups, Details, Profile */
+    /* Bottom bar: Home, Split & Expense, Groups, Payments, Profile */
     const tabs = [
       ["Dashboard", "home", "Home"],
-      ["Expenses", "grid", "Split"],
+      ["Expenses", "grid", "Split & Expense"],
       ["Groups", "users", "Groups"],
       ["Payments", "card", "Payments"],
       ["Profile", "user", "Profile"],
@@ -528,15 +528,19 @@ function Shell({ session }) {
               entries={entries}
               friends={friends}
               go={setPage}
-              splitHub={
-                <SplitHub
-                  entries={entries}
-                  friends={friends}
-                  reload={load}
-                  setError={setError}
-                  goFriends={() => setPage("Groups")}
-                  myName={myName}
-                />
+              reload={load}
+              setError={setError}
+              myId={myId}
+              myName={firstName(myName)}
+              header={
+                <header className="mb-top">
+                  <div className="mb-ttl">
+                    <h1>Split &amp; Expense</h1>
+                    <p>Track shared expenses easily</p>
+                  </div>
+                  <Bell requests={requests} owes={owes} go={setPage} />
+                  <ProfileMenu name={myName} go={setPage} />
+                </header>
               }
             />
           ) : page === "Payments" ? (
