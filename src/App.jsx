@@ -3,7 +3,6 @@ import { QRCodeSVG } from "qrcode.react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 import { setTheme, useTheme } from "./ThemeToggle";
-import SpDashboard from "./Dashboard";
 import AuthChoice from "./AuthChoice";
 import PaymentsHub from "./PaymentsHub";
 import SplitHub from "./SplitHub";
@@ -16,6 +15,8 @@ import "./shell.css";
 import "./mobile.css";
 import "./mobile-ui.css";
 import MobileHome from "./MobileHome";
+import DesktopHome from "./DesktopHome";
+import "./dk.css";
 
 const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
 const sumAmt = (list) => list.reduce((s, e) => s + Number(e.amount), 0);
@@ -24,19 +25,23 @@ const nameOfUser = (session) => {
   return m.name || m.full_name || (session.user.email || "").split("@")[0] || "there";
 };
 
-/* ---------- Sidebar pages: key, label, subtitle, icon, short label for phone ---------- */
-const NAV = [
-  ["Dashboard", "Dashboard", "Track expenses, split bills, and settle easily.", "home", "Home"],
-  ["Groups", "Groups", "Friends and people you split with.", "users", "Groups"],
-  ["Expenses", "Expenses", "Add and split expenses.", "receipt", "Expenses"],
-  ["Settlements", "Settlements", "Clear your dues in one tap.", "swap", "Settlements"],
-  ["Payments", "Payments", "Record payments and see your history.", "card", "Payments"],
-  ["Analytics", "Analytics", "See where your money goes.", "chart", "Analytics"],
+/* ---------- Sidebar items: key, label, icon ---------- */
+const SIDE = [
+  ["Dashboard", "Dashboard", "home"],
+  ["Groups", "Groups", "users"],
+  ["Expenses", "Expenses", "receipt"],
+  ["Payments", "Activity", "clock"],
+  ["Analytics", "Analytics", "chart"],
+  ["Profile", "Settings", "gear"],
 ];
-const PROFILE_META = ["Profile", "Your account and settings."];
-const GO = {
-  add: "Expenses", groups: "Groups", scan: "Settlements", share: "Groups",
-  expenses: "Expenses", friends: "Groups", pay: "Settlements",
+const TITLES = {
+  Dashboard: ["Dashboard", "Split smarter. Spend better."],
+  Groups: ["Groups", "Friends and people you split with."],
+  Expenses: ["Expenses", "Add and split expenses."],
+  Settlements: ["Settlements", "Clear your dues in one tap."],
+  Payments: ["Activity", "Record payments and see your history."],
+  Analytics: ["Analytics", "See where your money goes."],
+  Profile: ["Settings", "Your account and settings."],
 };
 
 const ICONS = {
@@ -52,6 +57,9 @@ const ICONS = {
   clock: (<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>),
   user: (<><circle cx="12" cy="8" r="3.6" /><path d="M5 20c0-3.8 3-6 7-6s7 2.2 7 6" /></>),
   plus: <path d="M12 5v14M5 12h14" />,
+  gear: (<><circle cx="12" cy="12" r="3" /><path d="M12 2.5v3M12 18.5v3M4.2 7l2.6 1.5M17.2 15.5l2.6 1.5M4.2 17l2.6-1.5M17.2 8.5l2.6-1.5" /></>),
+  sun: (<><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>),
+  moon: <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />,
 };
 function Icon({ name, size = 20 }) {
   return (
@@ -277,6 +285,16 @@ function Bell({ requests, owes, go }) {
   );
 }
 
+function ThemeSwitch() {
+  const { dark } = useTheme();
+  return (
+    <div className="dk-theme">
+      <button type="button" className={!dark ? "on" : ""} aria-label="Light mode" onClick={() => setTheme("light")}><Icon name="sun" size={18} /></button>
+      <button type="button" className={dark ? "on" : ""} aria-label="Dark mode" onClick={() => setTheme("dark")}><Icon name="moon" size={18} /></button>
+    </div>
+  );
+}
+
 function ProfileMenu({ name, go }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -370,7 +388,7 @@ function Shell({ session }) {
 
   const requests = connections.filter((c) => c.status === "pending" && c.addressee === myId).length;
   const owes = entries.filter((e) => e.status !== "Settled" && e.paid_by === "friend").slice(0, 3);
-  const meta = NAV.find((n) => n[0] === page) || [null, PROFILE_META[0], PROFILE_META[1]];
+  const meta = [null, ...(TITLES[page] || TITLES.Dashboard)];
   const home = page === "Dashboard";
 
   const pageBlocks = (
@@ -473,83 +491,59 @@ function Shell({ session }) {
   }
 
   return (
-    <div className="sp-shell">
-      <aside className="sp-side">
-        <div className="sp-logo">
-          <span className="sp-logo-ic">
+    <div className="dk-app">
+      <aside className="dk-side">
+        <div className="dk-logo">
+          <i>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
               <rect x="3.5" y="9" width="11" height="11" rx="3" /><rect x="9.5" y="3.5" width="11" height="11" rx="3" />
             </svg>
-          </span>
-          <span>Split<b>Pay</b></span>
+          </i>
+          <span>SplitPay</span>
         </div>
 
-        <nav className="sp-nav">
-          {NAV.map(([key, label, , icon, short]) => (
+        <nav className="dk-nav">
+          {SIDE.map(([key, label, icon]) => (
             <button key={key} type="button" className={page === key ? "on" : ""} onClick={() => setPage(key)}>
-              <Icon name={icon} />
-              <span className="d">{label}</span>
-              <span className="m">{short}</span>
+              <Icon name={icon} size={22} />
+              <span>{label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="sp-app">
-          <b><Icon name="phone" /> Get the App</b>
-          <small>Scan QR to download SplitPay mobile app</small>
+        <div className="dk-spacer" />
+
+        <div className="dk-appcard">
+          <b>Get the App</b>
+          <small>Scan QR to open SplitPay on your phone</small>
           <span className="sp-qrbox"><QRCodeSVG value={window.location.origin} size={92} /></span>
         </div>
-
-        <svg className="sp-mtn" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0 120V70L50 30l35 40 40-55 45 60 30-20 40 40v55z" />
-          <path d="M0 120V92l40-30 40 34 50-45 60 50 50-24v43z" />
-        </svg>
+        <ThemeSwitch />
       </aside>
 
-      <div className="sp-body">
-        <header className="sp-top">
-          <div className="sp-ttl">
-            {home ? (
-              <>
-                <h1><span className="d">Dashboard</span><span className="m">Hi, {myName} 👋</span></h1>
-                <p className="sp-sub home">
-                  <span className="d">Track expenses, split bills, and settle easily.</span>
-                  <span className="m">Track, split and settle expenses</span>
-                </p>
-              </>
-            ) : (
-              <>
-                <h1>{meta[1]}</h1>
-                <p className="sp-sub">{meta[2]}</p>
-              </>
-            )}
-          </div>
+      <div className="dk-main">
+        <header className="dk-top">
           <TopSearch entries={entries} friends={friends} go={setPage} />
+          <div className="dk-grow" />
           <Bell requests={requests} owes={owes} go={setPage} />
           <ProfileMenu name={myName} go={setPage} />
         </header>
 
-        <main className="sp-content">
+        <main className="sp-content dk-content">
           {error && <p className="error">{error}</p>}
-
-          {page === "Dashboard" && (
-            <SpDashboard
-              entries={entries}
-              friends={friends}
-              name={myName}
-              onNavigate={(key) => setPage(GO[key] || "Dashboard")}
-            />
+          {home ? (
+            <DesktopHome entries={entries} friends={friends} name={firstName(myName)} go={setPage} />
+          ) : (
+            <>
+              <div className="dk-pagehead">
+                <h1>{meta[1]}</h1>
+                <p>{meta[2]}</p>
+              </div>
+              {pageBlocks}
+            </>
           )}
-
-          {pageBlocks}
         </main>
       </div>
-
-      {home && (
-        <button type="button" className="sp-fab" aria-label="Add expense" onClick={() => setPage("Expenses")}>
-          +
-        </button>
-      )}
     </div>
   );
 }
