@@ -1,0 +1,9 @@
+/* Turns off the old green "SplitPay" splash that played on every refresh.
+   The new blue splash and Get Started screen replace it. */
+html::before, html::after,
+body::before, body::after,
+#root::before, #root::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+}

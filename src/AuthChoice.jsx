@@ -15,7 +15,62 @@ function GoogleG() {
   );
 }
 
+function LogoMark({ size = 40 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
+      <rect x="3.5" y="9" width="11" height="11" rx="3" />
+      <rect x="9.5" y="3.5" width="11" height="11" rx="3" />
+    </svg>
+  );
+}
+
+/* Shown while the app checks if you are logged in */
+export function Splash() {
+  return (
+    <div className="sa-splash">
+      <div className="sa-logo"><LogoMark size={44} /></div>
+      <h1 className="sa-name">SplitPay</h1>
+      <p className="sa-tag">Split. Track. Settle.</p>
+    </div>
+  );
+}
+
+function Welcome({ onStart }) {
+  const people = [["R", "#1d62f0", 12, 30], ["A", "#6a5cf0", 78, 14], ["P", "#0ea5a4", 4, 70], ["K", "#e0862b", 84, 66]];
+  return (
+    <div className="sa-page sa-welcome">
+      <div className="sa-brand">
+        <div className="sa-logo"><LogoMark size={40} /></div>
+        <h1 className="sa-name">SplitPay</h1>
+        <p className="sa-tag">Split. Track. Settle.</p>
+      </div>
+
+      <div className="sa-art" aria-hidden="true">
+        <div className="sa-ring" />
+        <svg viewBox="0 0 160 110" className="sa-card3d">
+          <g transform="rotate(-16 80 55)">
+            <rect x="22" y="20" width="116" height="72" rx="14" fill="url(#wc)" />
+            <rect x="34" y="34" width="26" height="9" rx="4.5" fill="#fff" opacity="0.8" />
+            <rect x="34" y="66" width="70" height="6" rx="3" fill="#fff" opacity="0.45" />
+            <rect x="34" y="77" width="44" height="6" rx="3" fill="#fff" opacity="0.3" />
+          </g>
+          <defs>
+            <linearGradient id="wc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#5b9bff" /><stop offset="1" stopColor="#1d62f0" /></linearGradient>
+          </defs>
+        </svg>
+        {people.map(([c, bg, l, t]) => (
+          <span key={c} className="sa-person" style={{ left: l + "%", top: t + "%", background: bg }}>{c}</span>
+        ))}
+      </div>
+
+      <p className="sa-welcome-tx">Your group expenses,<br />made effortless.</p>
+      <button type="button" className="sa-start" onClick={onStart}>Get Started →</button>
+    </div>
+  );
+}
+
 export default function AuthChoice({ emailForm }) {
+  const [step, setStep] = useState("welcome");
   const [via, setVia] = useState("email");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -36,15 +91,12 @@ export default function AuthChoice({ emailForm }) {
     }
   }
 
+  if (step === "welcome") return <Welcome onStart={() => setStep("auth")} />;
+
   return (
     <div className="sa-page">
       <div className="sa-brand">
-        <div className="sa-logo">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
-            <rect x="3.5" y="9" width="11" height="11" rx="3" />
-            <rect x="9.5" y="3.5" width="11" height="11" rx="3" />
-          </svg>
-        </div>
+        <div className="sa-logo"><LogoMark size={40} /></div>
         <h1 className="sa-name">SplitPay</h1>
         <p className="sa-tag">Split. Track. Settle.</p>
       </div>

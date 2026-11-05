@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 import { setTheme, useTheme } from "./ThemeToggle";
-import AuthChoice from "./AuthChoice";
+import AuthChoice, { Splash } from "./AuthChoice";
 import PaymentsHub from "./PaymentsHub";
 import SplitHub from "./SplitHub";
 import PayPage from "./PayPage";
@@ -18,6 +18,7 @@ import MobileHome from "./MobileHome";
 import DesktopHome from "./DesktopHome";
 import { MobileGroups, MobileProfile } from "./MobileScreens";
 import "./mobile-screens.css";
+import "./no-splash.css";
 import "./dk.css";
 
 const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
@@ -119,13 +120,13 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  if (loading) return <p style={{ padding: 40 }}>Loading...</p>;
+  if (loading) return <Splash />;
   return session ? <Shell session={session} /> : <AuthChoice emailForm={<Auth />} />;
 }
 
 /* ---------- Email login / signup ---------- */
 function Auth() {
-  const [mode, setMode] = useState("signup");
+  const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -153,6 +154,12 @@ function Auth() {
 
   return (
     <div className="sa-form">
+      <div className="sa-tabs sa-mode">
+        <button type="button" className={mode === "login" ? "on" : ""}
+          onClick={() => { setMode("login"); setMessage(""); }}>Login</button>
+        <button type="button" className={mode === "signup" ? "on" : ""}
+          onClick={() => { setMode("signup"); setMessage(""); }}>Register</button>
+      </div>
       <h1>{mode === "signup" ? "Create your account" : "Welcome back"}</h1>
       <p className="sub">
         {mode === "signup"
