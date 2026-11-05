@@ -1,5 +1,5 @@
 /* Desktop dashboard (matches the website mockup). Numbers come from your real entries and friends. */
-const R = (n) => "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
+export const R = (n) => "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
 const dateOf = (e) => new Date(e.payment_date || e.created_at || Date.now());
 const mkey = (d) => d.getFullYear() * 12 + d.getMonth();
 const sumA = (l) => l.reduce((s, e) => s + Number(e.amount), 0);
@@ -97,7 +97,7 @@ function Stat({ icon, tint, label, value, vals, color, id, badUp }) {
 }
 
 /* Picture-style covers for the group cards */
-function Cover({ kind, uid }) {
+export function Cover({ kind, uid }) {
   const g = "cv" + uid;
   return (
     <svg viewBox="0 0 300 150" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -146,15 +146,15 @@ function Cover({ kind, uid }) {
     </svg>
   );
 }
-const kindFor = (name, i) => {
+export const kindFor = (name, i) => {
   if (/trip|travel|goa|tour|hill|manali|buddies|tour/i.test(name)) return "mountain";
   if (/cafe|coffee|chai|food|dinner|lunch|crew/i.test(name)) return "cafe";
   if (/room|flat|rent|home|house|pg|mate/i.test(name)) return "room";
   return ["city", "mountain", "cafe", "room"][i % 4];
 };
 const HUES = ["#1d62f0", "#6a5cf0", "#0ea5a4", "#e0862b", "#d9467a"];
-const hue = (s) => HUES[[...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0) % HUES.length];
-const ini = (s) => String(s || "?").trim().charAt(0).toUpperCase();
+export const hue = (s) => HUES[[...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0) % HUES.length];
+export const ini = (s) => String(s || "?").trim().charAt(0).toUpperCase();
 
 export default function DesktopHome({ entries, friends, name, go }) {
   const ms = lastMonths(6);

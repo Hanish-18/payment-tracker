@@ -16,6 +16,8 @@ import "./mobile.css";
 import "./mobile-ui.css";
 import MobileHome from "./MobileHome";
 import DesktopHome from "./DesktopHome";
+import { MobileGroups, MobileProfile } from "./MobileScreens";
+import "./mobile-screens.css";
 import "./dk.css";
 
 const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
@@ -337,6 +339,7 @@ function Shell({ session }) {
   const [profiles, setProfiles] = useState([]);
   const [error, setError] = useState("");
   const phone = useIsPhone();
+  const { dark } = useTheme();
 
   async function load() {
     const [e, f, c, p] = await Promise.all([
@@ -452,6 +455,7 @@ function Shell({ session }) {
     ];
     return (
       <div className="mb-app">
+        {page !== "Groups" && page !== "Profile" && (
         <header className="mb-top">
           <div className="mb-ttl">
             {home ? (
@@ -466,10 +470,46 @@ function Shell({ session }) {
           <Bell requests={requests} owes={owes} go={setPage} />
           <ProfileMenu name={myName} go={setPage} />
         </header>
+        )}
 
         <main className="sp-content mb-content">
           {error && <p className="error">{error}</p>}
-          {home ? <MobileHome entries={entries} go={setPage} /> : pageBlocks}
+          {home ? (
+            <MobileHome entries={entries} go={setPage} />
+          ) : page === "Groups" ? (
+            <MobileGroups
+              friends={friends}
+              entries={entries}
+              go={setPage}
+              reload={load}
+              setError={setError}
+              manage={
+                <Friends
+                  friends={friends}
+                  connections={connections}
+                  profiles={profiles}
+                  entries={entries}
+                  myId={myId}
+                  reload={load}
+                  setError={setError}
+                />
+              }
+            />
+          ) : page === "Profile" ? (
+            <MobileProfile
+              session={session}
+              name={myName}
+              entries={entries}
+              requests={requests}
+              owes={owes}
+              go={setPage}
+              dark={dark}
+              onTheme={() => setTheme(dark ? "light" : "dark")}
+              settingsPage={<ProfilePage session={session} profiles={profiles} />}
+            />
+          ) : (
+            pageBlocks
+          )}
         </main>
 
         <nav className="mb-nav">
