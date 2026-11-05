@@ -482,17 +482,17 @@ function Shell({ session }) {
     return (
       <div className="mb-app">
         {page !== "Groups" && page !== "Profile" && (
-        <header className={"mb-top" + (home ? " mb-top-home" : "")}>
-          {home ? (
-            <div className="mb-brand">
-              <LogoMark size={40} />
-              <span>SplitPay</span>
-            </div>
-          ) : (
-            <div className="mb-ttl">
+        <header className="mb-top">
+          <div className="mb-ttl">
+            {home ? (
+              <>
+                <h1>Hi, {firstName(myName)} 👋</h1>
+                <p>Let's split something?</p>
+              </>
+            ) : (
               <h1>{meta[1]}</h1>
-            </div>
-          )}
+            )}
+          </div>
           <Bell requests={requests} owes={owes} go={setPage} />
           <ProfileMenu name={myName} go={setPage} />
         </header>
