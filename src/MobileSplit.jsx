@@ -188,11 +188,6 @@ export default function MobileSplit({ entries, friends, go, splitHub }) {
         <span className="mp-bars" aria-hidden="true"><i /><i /><i /><i /></span>
       </div>
 
-      {/* Scan & Split */}
-      <button type="button" className="mp-scan" onClick={() => setView("Split Bill")}>
-        <Ic n="scan" s={28} />
-        <span>Scan &amp; Split</span>
-      </button>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import "./mobile.css";
 import "./mobile-ui.css";
 import MobileHome from "./MobileHome";
 import MobileSplit from "./MobileSplit";
+import MobilePayments from "./MobilePayments";
 import DesktopHome from "./DesktopHome";
 import { MobileGroups, MobileProfile } from "./MobileScreens";
 import "./mobile-screens.css";
@@ -477,12 +478,12 @@ function Shell({ session }) {
       ["Dashboard", "home", "Home"],
       ["Expenses", "grid", "Split"],
       ["Groups", "users", "Groups"],
-      ["Payments", "chart", "Details"],
+      ["Payments", "card", "Payments"],
       ["Profile", "user", "Profile"],
     ];
     return (
       <div className="mb-app">
-        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && (
+        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && page !== "Payments" && (
         <header className="mb-top">
           <div className="mb-ttl">
             {home ? (
@@ -529,6 +530,36 @@ function Shell({ session }) {
               go={setPage}
               splitHub={
                 <SplitHub
+                  entries={entries}
+                  friends={friends}
+                  reload={load}
+                  setError={setError}
+                  goFriends={() => setPage("Groups")}
+                  myName={myName}
+                />
+              }
+            />
+          ) : page === "Payments" ? (
+            <MobilePayments
+              entries={entries}
+              friends={friends}
+              go={setPage}
+              reload={load}
+              setError={setError}
+              myId={myId}
+              myName={firstName(myName)}
+              header={
+                <header className="mb-top">
+                  <div className="mb-ttl">
+                    <h1>Payments</h1>
+                    <p>Track and manage all your payments in one place.</p>
+                  </div>
+                  <Bell requests={requests} owes={owes} go={setPage} />
+                  <ProfileMenu name={myName} go={setPage} />
+                </header>
+              }
+              paymentsHub={
+                <PaymentsHub
                   entries={entries}
                   friends={friends}
                   reload={load}

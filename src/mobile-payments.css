@@ -1,0 +1,99 @@
+/* Payments flow (phone): home, Add Payment, Payment Details */
+.pm .ms-bar { margin-bottom: 16px; }
+.pm .ms-bar h2 { font-size: 21px; }
+.pm button { font-family: inherit; }
+
+.pm .pm-flash { margin: 0 0 12px; padding: 12px 16px; border-radius: 14px; background: #d9f7ec; color: #0f9d6e; font-weight: 700; font-size: 14.5px; text-align: center; }
+
+/* Balance card */
+.pm .pm-bal { position: relative; display: block; width: 100%; min-height: 160px; overflow: hidden; text-align: left; border: 0; border-radius: 24px; padding: 20px; cursor: pointer; color: #fff; background: linear-gradient(135deg, #2f5fd0 0%, #16358f 100%); box-shadow: 0 14px 30px rgba(14, 42, 110, 0.35); }
+.pm .pm-bal > span { position: relative; z-index: 1; display: flex; }
+.pm .pm-bal-lbl { font-size: 16px; font-weight: 600; opacity: 0.9; }
+.pm .pm-bal-amt { margin-top: 6px; font-size: 40px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+.pm .pm-bal-chip { margin-top: 14px; display: inline-flex; align-items: center; gap: 6px; width: fit-content; padding: 7px 14px; border-radius: 999px; background: rgba(60, 220, 180, 0.28); color: #d9fff3; font-size: 13.5px; font-weight: 700; }
+.pm .pm-wallet { position: absolute; right: -4px; bottom: -6px; width: 46%; max-width: 190px; height: auto; filter: drop-shadow(0 12px 16px rgba(0, 20, 90, 0.35)); }
+
+/* Quick actions */
+.pm .pm-qa { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0 4px; }
+.pm .pm-qa button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 92px; padding: 12px 4px; border: 1px solid var(--cardline, #e3ebfb); border-radius: 20px; background: var(--card, #fff); color: #1d62f0; cursor: pointer; box-shadow: 0 6px 16px rgba(20, 60, 160, 0.08); }
+.pm .pm-qa button span { font-size: 12.5px; font-weight: 700; line-height: 1.15; text-align: center; color: var(--ink, #0f1f4a); }
+.pm .pm-qa button.hi { border: 0; color: #fff; background: linear-gradient(180deg, #3a7bff 0%, #1250d8 100%); box-shadow: 0 10px 22px rgba(29, 98, 240, 0.4); }
+.pm .pm-qa button.hi span { color: #fff; }
+html[data-theme="dark"] .pm .pm-qa button { color: #7fa6ff; }
+
+.pm .pm-head { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 12px; }
+.pm .pm-head h2 { margin: 0; font-size: 21px; font-weight: 800; }
+.pm .pm-head button { border: 0; background: transparent; box-shadow: none; padding: 0; font-size: 14.5px; font-weight: 700; color: var(--pri, #1d62f0); cursor: pointer; }
+.pm .pm-empty { padding: 18px; text-align: center; border-radius: 18px; background: var(--card, #fff); border: 1px dashed var(--cardline, #dfe7fa); color: var(--mut, #5b6b8f); font-size: 14px; }
+
+.pm .pm-list { padding: 4px 14px; border-radius: 22px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); box-shadow: 0 6px 18px rgba(20, 60, 160, 0.07); }
+.pm .pm-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 0; border: 0; border-bottom: 1px solid var(--line, #edf1fa); background: transparent; box-shadow: none; text-align: left; color: var(--mut, #5b6b8f); cursor: pointer; }
+.pm .pm-row:last-child { border-bottom: 0; }
+.pm .pm-row-ic { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--tile2, #dfe9ff); color: #1d62f0; }
+.pm .pm-row-mid { flex: 1; min-width: 0; }
+.pm .pm-row-mid b { display: block; font-size: 16px; font-weight: 800; color: var(--ink, #0f1f4a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm .pm-row-mid small { display: block; margin-top: 3px; font-size: 12.5px; color: var(--mut, #5b6b8f); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm .pm-ago { flex: 0 0 auto; font-size: 12.5px; color: var(--mut, #5b6b8f); white-space: nowrap; }
+
+/* Add Payment form */
+.pm .pm-seg { display: grid; grid-template-columns: 1.15fr 1fr; gap: 6px; padding: 5px; margin-bottom: 14px; border-radius: 999px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); }
+.pm .pm-seg button { display: flex; align-items: center; justify-content: center; gap: 8px; height: 46px; border: 0; border-radius: 999px; background: transparent; color: var(--ink, #0f1f4a); font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: none; }
+.pm .pm-seg button.on { background: linear-gradient(180deg, #2f6fed, #12327f); color: #fff; box-shadow: 0 8px 18px rgba(18, 50, 127, 0.3); }
+.pm .pm-lbl { display: block; margin: 14px 0 7px; font-size: 14.5px; font-weight: 700; color: var(--ink, #0f1f4a); }
+.pm .pm-field { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border-radius: 16px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); color: var(--mut, #5b6b8f); }
+.pm .pm-field input, .pm .pm-field select { flex: 1; min-width: 0; height: 50px; border: 0 !important; outline: none; background: transparent !important; box-shadow: none !important; font-family: inherit; font-size: 16px; font-weight: 600; color: var(--ink, #0f1f4a) !important; padding: 0; margin: 0; -webkit-appearance: none; appearance: none; }
+.pm .pm-field select { cursor: pointer; }
+.pm .pm-rs { font-size: 20px; color: var(--ink, #0f1f4a); }
+.pm .pm-mut { flex: 1; font-size: 14.5px; }
+.pm .pm-link { border: 0; background: transparent; box-shadow: none; color: var(--pri, #1d62f0); font-weight: 700; font-size: 14px; cursor: pointer; padding: 0; }
+.pm .pm-av { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 800; }
+.pm .pm-av.big { width: 46px; height: 46px; font-size: 17px; }
+
+.pm .pm-cats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.pm .pm-cats button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 68px; padding: 8px 2px; border: 1px solid var(--cardline, #e3ebfb); border-radius: 16px; background: var(--card, #fff); color: var(--mut, #5b6b8f); cursor: pointer; box-shadow: none; }
+.pm .pm-cats button span { font-size: 11.5px; font-weight: 700; }
+.pm .pm-cats button.on { border: 2px solid #2f6fed; background: var(--tile, #eef3ff); color: #1d62f0; }
+
+.pm .pm-split { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 16px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); }
+.pm .pm-chips { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; }
+.pm .pm-chips button { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px 0 5px; border: 1px solid var(--cardline, #e3ebfb); border-radius: 999px; background: var(--tile, #eef3ff); color: var(--ink, #0f1f4a); font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: none; }
+.pm .pm-chips button i { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-style: normal; font-size: 12px; font-weight: 800; }
+.pm .pm-chips button.on { border: 2px solid #2f6fed; background: #dfe9ff; }
+.pm .pm-count { flex: 0 0 auto; align-self: center; font-size: 13.5px; font-weight: 600; color: var(--mut, #5b6b8f); white-space: nowrap; }
+
+.pm .pm-err { margin: 12px 0 0; color: #e11d48; font-size: 14px; font-weight: 600; }
+.pm .pm-cta { display: block; width: 100%; height: 58px; margin-top: 18px; border: 0; border-radius: 999px; background: linear-gradient(180deg, #2f7bff 0%, #1250d8 100%); color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; box-shadow: 0 12px 26px rgba(29, 98, 240, 0.42); }
+.pm .pm-cta:disabled { opacity: 0.6; }
+.pm .pm-sticky { position: sticky; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 4; }
+.pm .pm-info { padding: 18px; border-radius: 20px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); }
+.pm .pm-info b { font-size: 16px; color: var(--ink, #0f1f4a); }
+.pm .pm-info p { margin: 6px 0 0; font-size: 14px; color: var(--mut, #5b6b8f); }
+
+/* Payment Details */
+.pm .pm-top { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 22px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); box-shadow: 0 6px 18px rgba(20, 60, 160, 0.07); }
+.pm .pm-top-ic { flex: 0 0 auto; width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; background: var(--tile2, #dfe9ff); color: #1d62f0; }
+.pm .pm-top-mid { flex: 1; min-width: 0; }
+.pm .pm-top-mid b { display: block; font-size: 17px; font-weight: 800; color: var(--ink, #0f1f4a); }
+.pm .pm-top-mid small { display: block; margin-top: 3px; font-size: 13px; color: var(--mut, #5b6b8f); }
+.pm .pm-top-amt { flex: 0 0 auto; font-size: 24px; font-weight: 800; color: var(--ink, #0f1f4a); letter-spacing: -0.3px; }
+.pm .pm-h3 { margin: 22px 0 12px; font-size: 20px; font-weight: 800; }
+.pm .pm-people { padding: 4px 14px; border-radius: 20px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); }
+.pm .pm-person { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line, #edf1fa); }
+.pm .pm-person:last-child { border-bottom: 0; }
+.pm .pm-person b { flex: 1; font-size: 16px; font-weight: 700; color: var(--ink, #0f1f4a); }
+.pm .pm-amt { padding: 7px 14px; border-radius: 999px; background: var(--tile, #eef3ff); color: #3b5bb5; font-size: 14.5px; font-weight: 800; }
+.pm .pm-amt.paid { background: #d9f7ec; color: #0f9d6e; }
+.pm .pm-status { display: flex; align-items: center; gap: 14px; margin-top: 16px; padding: 16px; border-radius: 20px; }
+.pm .pm-status.ok { background: #e2f8ef; }
+.pm .pm-status.wait { background: #fff3d9; }
+.pm .pm-status-ic { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; }
+.pm .pm-status.ok .pm-status-ic { background: #1fa774; }
+.pm .pm-status.wait .pm-status-ic { background: #e99a14; }
+.pm .pm-status b { display: block; font-size: 17px; font-weight: 800; color: #0f1f4a; }
+.pm .pm-status small { display: block; margin-top: 2px; font-size: 13.5px; color: #4b5a7a; }
+.pm .pm-share { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 56px; margin-top: 16px; border-radius: 999px; border: 1px solid var(--cardline, #cfdcf7); background: var(--card, #fff); color: var(--ink, #0f1f4a); font-size: 16.5px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(20, 60, 160, 0.08); }
+
+@media (max-width: 360px) {
+  .pm .pm-cats button span { font-size: 10.5px; }
+  .pm .pm-bal-amt { font-size: 34px; }
+}
