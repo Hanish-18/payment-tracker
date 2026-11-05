@@ -15,6 +15,7 @@ import "./shell.css";
 import "./mobile.css";
 import "./mobile-ui.css";
 import MobileHome from "./MobileHome";
+import MobileSplit from "./MobileSplit";
 import DesktopHome from "./DesktopHome";
 import { MobileGroups, MobileProfile } from "./MobileScreens";
 import "./mobile-screens.css";
@@ -481,7 +482,7 @@ function Shell({ session }) {
     ];
     return (
       <div className="mb-app">
-        {page !== "Groups" && page !== "Profile" && (
+        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && (
         <header className="mb-top">
           <div className="mb-ttl">
             {home ? (
@@ -518,6 +519,22 @@ function Shell({ session }) {
                   myId={myId}
                   reload={load}
                   setError={setError}
+                />
+              }
+            />
+          ) : page === "Expenses" ? (
+            <MobileSplit
+              entries={entries}
+              friends={friends}
+              go={setPage}
+              splitHub={
+                <SplitHub
+                  entries={entries}
+                  friends={friends}
+                  reload={load}
+                  setError={setError}
+                  goFriends={() => setPage("Groups")}
+                  myName={myName}
                 />
               }
             />
