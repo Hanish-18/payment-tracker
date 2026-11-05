@@ -17,6 +17,8 @@ import "./mobile-ui.css";
 import MobileHome from "./MobileHome";
 import MobileSplit from "./MobileSplit";
 import MobilePayments from "./MobilePayments";
+import MobileFriends from "./MobileFriends";
+import MobileAnalytics from "./MobileAnalytics";
 import DesktopHome from "./DesktopHome";
 import { MobileGroups, MobileProfile } from "./MobileScreens";
 import "./mobile-screens.css";
@@ -483,7 +485,7 @@ function Shell({ session }) {
     ];
     return (
       <div className="mb-app">
-        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && page !== "Payments" && (
+        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && page !== "Payments" && page !== "Friends" && page !== "Analytics" && (
         <header className="mb-top">
           <div className="mb-ttl">
             {home ? (
@@ -573,6 +575,17 @@ function Shell({ session }) {
                 />
               }
             />
+          ) : page === "Friends" ? (
+            <MobileFriends
+              entries={entries}
+              friends={friends}
+              go={setPage}
+              reload={load}
+              setError={setError}
+              myId={myId}
+            />
+          ) : page === "Analytics" ? (
+            <MobileAnalytics entries={entries} go={setPage} />
           ) : page === "Profile" ? (
             <MobileProfile
               session={session}
@@ -592,7 +605,7 @@ function Shell({ session }) {
 
         <nav className="mb-nav">
           {tabs.map(([key, icon, label]) => (
-            <button key={key} type="button" className={page === key ? "on" : ""} onClick={() => setPage(key)}>
+            <button key={key} type="button" className={page === key || (key === "Dashboard" && (page === "Friends" || page === "Analytics")) ? "on" : ""} onClick={() => setPage(key)}>
               <Icon name={icon} size={22} />
               <span>{label}</span>
             </button>
