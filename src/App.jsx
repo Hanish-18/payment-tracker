@@ -60,6 +60,7 @@ const ICONS = {
   clock: (<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>),
   user: (<><circle cx="12" cy="8" r="3.6" /><path d="M5 20c0-3.8 3-6 7-6s7 2.2 7 6" /></>),
   plus: <path d="M12 5v14M5 12h14" />,
+  grid: (<><circle cx="7.5" cy="7.5" r="3" /><circle cx="16.5" cy="7.5" r="3" /><circle cx="7.5" cy="16.5" r="3" /><circle cx="16.5" cy="16.5" r="3" /></>),
   gear: (<><circle cx="12" cy="12" r="3" /><path d="M12 2.5v3M12 18.5v3M4.2 7l2.6 1.5M17.2 15.5l2.6 1.5M4.2 17l2.6-1.5M17.2 8.5l2.6-1.5" /></>),
   sun: (<><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>),
   moon: <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />,
@@ -69,6 +70,23 @@ function Icon({ name, size = 20 }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {ICONS[name]}
+    </svg>
+  );
+}
+
+/* SplitPay logo mark used in the phone home header */
+function LogoMark({ size = 40 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <defs>
+        <linearGradient id="lm-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#3b82ff" />
+          <stop offset="1" stopColor="#1240c8" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="36" height="36" rx="11" fill="url(#lm-grad)" />
+      <text x="20" y="28" textAnchor="middle" fontSize="23" fontWeight="800" fill="#fff"
+        fontFamily="system-ui, -apple-system, sans-serif">S</text>
     </svg>
   );
 }
@@ -453,27 +471,28 @@ function Shell({ session }) {
   );
 
   if (phone) {
+    /* Bottom bar: Home, Split, Groups, Details, Profile */
     const tabs = [
       ["Dashboard", "home", "Home"],
+      ["Expenses", "grid", "Split"],
       ["Groups", "users", "Groups"],
-      ["Expenses", "plus", ""],
-      ["Payments", "clock", "Activity"],
+      ["Payments", "chart", "Details"],
       ["Profile", "user", "Profile"],
     ];
     return (
       <div className="mb-app">
         {page !== "Groups" && page !== "Profile" && (
-        <header className="mb-top">
-          <div className="mb-ttl">
-            {home ? (
-              <>
-                <h1>Hi, {firstName(myName)} 👋</h1>
-                <p>Let's split something?</p>
-              </>
-            ) : (
+        <header className={"mb-top" + (home ? " mb-top-home" : "")}>
+          {home ? (
+            <div className="mb-brand">
+              <LogoMark size={40} />
+              <span>SplitPay</span>
+            </div>
+          ) : (
+            <div className="mb-ttl">
               <h1>{meta[1]}</h1>
-            )}
-          </div>
+            </div>
+          )}
           <Bell requests={requests} owes={owes} go={setPage} />
           <ProfileMenu name={myName} go={setPage} />
         </header>
@@ -482,7 +501,7 @@ function Shell({ session }) {
         <main className="sp-content mb-content">
           {error && <p className="error">{error}</p>}
           {home ? (
-            <MobileHome entries={entries} go={setPage} />
+            <MobileHome entries={entries} go={setPage} friends={friends} />
           ) : page === "Groups" ? (
             <MobileGroups
               friends={friends}
@@ -520,18 +539,12 @@ function Shell({ session }) {
         </main>
 
         <nav className="mb-nav">
-          {tabs.map(([key, icon, label]) =>
-            key === "Expenses" ? (
-              <button key={key} type="button" className="mb-plus" aria-label="Add expense" onClick={() => setPage("Expenses")}>
-                <span className="c"><Icon name="plus" size={26} /></span>
-              </button>
-            ) : (
-              <button key={key} type="button" className={page === key ? "on" : ""} onClick={() => setPage(key)}>
-                <Icon name={icon} size={22} />
-                <span>{label}</span>
-              </button>
-            )
-          )}
+          {tabs.map(([key, icon, label]) => (
+            <button key={key} type="button" className={page === key ? "on" : ""} onClick={() => setPage(key)}>
+              <Icon name={icon} size={22} />
+              <span>{label}</span>
+            </button>
+          ))}
         </nav>
       </div>
     );

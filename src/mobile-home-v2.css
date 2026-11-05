@@ -1,0 +1,37 @@
+/* Home screen v2: hero, Add Expense, quick actions, groups, activity card.
+   The Total Balance card (.mh-bal) is NOT touched here. */
+
+.mh .mh-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 4px 0 18px; }
+.mh .mh-hero-txt { flex: 1 1 55%; min-width: 0; position: relative; z-index: 1; }
+.mh .mh-hero-txt h1 { margin: 0; font-family: inherit; font-size: 30px; line-height: 1.12; font-weight: 800; letter-spacing: -0.6px; color: var(--ink, #0f1f4a); }
+.mh .mh-hero-txt p { margin: 10px 0 0; font-size: 15px; line-height: 1.4; color: var(--mut, #5b6b8f); max-width: 190px; }
+.mh .mh-wallet { flex: 0 0 auto; width: 44%; max-width: 190px; height: auto; filter: drop-shadow(0 14px 18px rgba(18, 64, 200, 0.28)); }
+
+/* Add Expense */
+.mh .mh-add { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 60px; margin: 18px 0 0; border: 0; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 19px; font-weight: 700; color: #fff; background: linear-gradient(180deg, #2f7bff 0%, #1250d8 100%); box-shadow: 0 12px 26px rgba(29, 98, 240, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.mh .mh-add:active { transform: translateY(1px); }
+
+/* Quick actions as rounded cards */
+.mh .mh-qa2 { gap: 10px; margin: 18px 0 4px; }
+.mh .mh-qa2 button { gap: 0; }
+.mh .mh-qa2 .mh-qa-ic { width: 100%; aspect-ratio: 1 / 1; height: auto; border-radius: 22px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); box-shadow: 0 6px 16px rgba(20, 60, 160, 0.08); color: #1d62f0; }
+.mh .mh-qa2 .mh-qa-lbl { margin-top: -34px; padding: 0 4px 10px; font-size: 12px; font-weight: 700; line-height: 1.15; position: relative; }
+.mh .mh-qa2 button { position: relative; }
+.mh .mh-qa2 .mh-qa-ic { padding-bottom: 28px; }
+html[data-theme="dark"] .mh .mh-qa2 .mh-qa-ic { color: #7fa6ff; }
+
+/* Your Groups: horizontal cards */
+.mh .mh-groups { display: flex; gap: 12px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 10px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.mh .mh-groups::-webkit-scrollbar { display: none; }
+.mh .mh-gc { flex: 0 0 140px; scroll-snap-align: start; display: flex; flex-direction: column; align-items: flex-start; padding: 0 0 12px; border: 1px solid var(--cardline, #e3ebfb); border-radius: 20px; overflow: hidden; background: var(--card, #fff); box-shadow: 0 6px 16px rgba(20, 60, 160, 0.08); text-align: left; font-family: inherit; cursor: pointer; }
+.mh .mh-gc-cover { display: block; width: 100%; height: 84px; overflow: hidden; margin-bottom: 10px; }
+.mh .mh-gc-cover svg { width: 100%; height: 100%; display: block; }
+.mh .mh-gc b { display: block; width: 100%; padding: 0 12px; font-size: 15.5px; font-weight: 800; color: var(--ink, #0f1f4a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mh .mh-gc small { display: block; padding: 0 12px; margin-top: 3px; font-size: 12.5px; color: var(--mut, #5b6b8f); }
+.mh .mh-gc-new { align-items: center; justify-content: center; gap: 10px; padding: 14px 8px; background: var(--tile, #eef3ff); box-shadow: none; }
+.mh .mh-gc-new b { padding: 0; text-align: center; font-weight: 700; font-size: 15px; line-height: 1.25; white-space: normal; }
+.mh .mh-gc-plus { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: var(--card, #fff); color: #1d62f0; box-shadow: 0 4px 12px rgba(20, 60, 160, 0.14); }
+
+/* Recent Activity card */
+.mh .mh-act { padding: 4px 14px; border-radius: 22px; background: var(--card, #fff); border: 1px solid var(--cardline, #e3ebfb); box-shadow: 0 6px 18px rgba(20, 60, 160, 0.07); }
+.mh .mh-head { margin: 24px 0 12px; }
