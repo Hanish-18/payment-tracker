@@ -1,0 +1,40 @@
+/* SplitPay login / splash (matches the mockup). Imported by AuthChoice.jsx */
+.sa-page { min-height: 100vh; min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding: calc(36px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom)); background: radial-gradient(120% 60% at 50% 0%, #dbe7ff 0%, var(--bg, #f3f6fe) 60%); color: var(--ink, #0f1f4a); font-family: inherit; }
+html[data-theme="dark"] .sa-page { background: radial-gradient(120% 60% at 50% 0%, #11265a 0%, var(--bg, #0a1120) 60%); }
+.sa-page * { box-sizing: border-box; }
+
+.sa-brand { text-align: center; margin-bottom: 26px; }
+.sa-logo { width: 76px; height: 76px; margin: 0 auto 14px; border-radius: 24px; display: grid; place-items: center; background: linear-gradient(135deg, #0a47d6, #3b82ff); box-shadow: 0 14px 30px rgba(29, 98, 240, 0.35); }
+.sa-name { margin: 0; font-size: 36px; font-weight: 800; letter-spacing: -0.5px; color: var(--ink, #0f1f4a); line-height: 1.1; }
+.sa-tag { margin: 6px 0 0; font-size: 15px; color: var(--mut, #5b6b8f); }
+
+.sa-card { width: 100%; max-width: 440px; background: var(--card, #fff); border: 1px solid var(--cardline, #e9eefb); border-radius: 26px; padding: 18px 18px 22px; box-shadow: 0 18px 50px rgba(20, 60, 160, 0.12); }
+
+.sa-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; margin-bottom: 18px; border-radius: 999px; background: var(--tile, #eef3ff); }
+.sa-page .sa-tabs button { border: 0; box-shadow: none; margin: 0; padding: 11px 8px; border-radius: 999px; font-size: 14.5px; font-weight: 700; font-family: inherit; cursor: pointer; background: transparent; color: var(--mut, #5b6b8f); }
+.sa-page .sa-tabs button.on { background: #12327f; color: #fff; box-shadow: 0 6px 14px rgba(18, 50, 127, 0.3); }
+html[data-theme="dark"] .sa-page .sa-tabs button.on { background: var(--pri, #1f5fff); }
+
+/* Forms (email, phone, forgot) */
+.sa-card .topbar { display: none; }
+.sa-card .auth, .sa-card .sa-form { max-width: none; width: 100%; margin: 0; padding: 0; background: transparent; border: 0; box-shadow: none; }
+.sa-card h1, .sa-card .sa-title { margin: 0 0 4px; font-size: 22px; font-weight: 800; color: var(--ink, #0f1f4a); }
+.sa-card .sub { display: block; margin: 0 0 14px; font-size: 14px; color: var(--mut, #5b6b8f); }
+.sa-card label { display: block; margin: 12px 0 6px; font-size: 13px; font-weight: 700; color: var(--mut, #5b6b8f); }
+.sa-page .sa-card input { width: 100%; height: 50px; margin: 0; padding: 0 16px; border-radius: 14px; border: 1px solid var(--inputline, #dde5f6); background: var(--tile, #eef3ff); color: var(--ink, #0f1f4a); font-size: 16px; font-family: inherit; outline: none; }
+.sa-page .sa-card input:focus { border-color: var(--pri, #1d62f0); background: var(--card, #fff); box-shadow: 0 0 0 3px rgba(29, 98, 240, 0.15); }
+.sa-page .sa-card button.primary { width: 100%; height: 54px; margin-top: 18px; border: 0; border-radius: 999px; background: #12327f; color: #fff; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; box-shadow: 0 10px 22px rgba(18, 50, 127, 0.3); }
+html[data-theme="dark"] .sa-page .sa-card button.primary { background: var(--pri, #1f5fff); }
+.sa-page .sa-card button.primary:disabled { opacity: 0.6; }
+.sa-card .error { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(225, 29, 72, 0.1); color: #d11a2a; font-size: 14px; }
+.sa-card .switch { margin: 16px 0 0; text-align: center; font-size: 14px; color: var(--mut, #5b6b8f); }
+.sa-page button.link { border: 0; background: transparent; box-shadow: none; padding: 0; color: var(--pri, #1d62f0); font-weight: 700; font-size: inherit; font-family: inherit; cursor: pointer; }
+.sa-page button.link:disabled { color: var(--mut, #5b6b8f); cursor: default; }
+
+.sa-more { width: 100%; max-width: 440px; margin-top: 18px; text-align: center; }
+.sa-more .sa-forgot { margin: 0 0 14px; }
+.sa-or { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; color: var(--mut, #5b6b8f); font-size: 13px; }
+.sa-or::before, .sa-or::after { content: ""; flex: 1; height: 1px; background: var(--cardline, #e1e8f8); }
+.sa-page button.sa-google { width: 100%; height: 52px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; border: 1px solid var(--cardline, #e1e8f8); background: var(--card, #fff); color: var(--ink, #0f1f4a); font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; box-shadow: var(--shadow, 0 4px 20px rgba(20, 60, 160, 0.07)); }
+.sa-page button.sa-google:disabled { opacity: 0.6; }
+.sa-foot { margin: 22px 0 0; font-size: 13.5px; color: var(--mut, #5b6b8f); text-align: center; }

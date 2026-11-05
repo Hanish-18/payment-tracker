@@ -3,7 +3,6 @@ import { QRCodeSVG } from "qrcode.react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { supabase } from "./supabaseClient";
 import { setTheme, useTheme } from "./ThemeToggle";
-import { ForgotLink } from "./Recovery";
 import SpDashboard from "./Dashboard";
 import AuthChoice from "./AuthChoice";
 import PaymentsHub from "./PaymentsHub";
@@ -121,41 +120,39 @@ function Auth() {
   }
 
   return (
-    <>
-      <div className="topbar"><span className="brand">SplitPay</span></div>
-      <div className="auth">
-        <h1>{mode === "signup" ? "Create your ledger" : "Welcome back"}</h1>
-        <p className="sub">
-          Email and password only. Your data stays private to this account.
-        </p>
-        <form onSubmit={submit}>
-          {mode === "signup" && (
-            <>
-              <label>Name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} required />
-            </>
-          )}
-          <label>Email</label>
-          <input type="email" value={email}
-            onChange={(e) => setEmail(e.target.value)} required />
-          <label>Password</label>
-          <input type="password" minLength={6} value={password}
-            onChange={(e) => setPassword(e.target.value)} required />
-          {message && <p className="error">{message}</p>}
-          <button className="primary" type="submit" disabled={busy}>
-            {busy ? "Please wait..." : mode === "signup" ? "Create account" : "Log in"}
-          </button>
-        </form>
-        {mode === "login" && <ForgotLink />}
-        <p className="switch">
-          {mode === "signup" ? "Already have an account? " : "New here? "}
-          <button className="link" type="button"
-            onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setMessage(""); }}>
-            {mode === "signup" ? "Log in" : "Create account"}
-          </button>
-        </p>
-      </div>
-    </>
+    <div className="sa-form">
+      <h1>{mode === "signup" ? "Create your account" : "Welcome back"}</h1>
+      <p className="sub">
+        {mode === "signup"
+          ? "Sign up with email and start splitting."
+          : "Log in to see your balances."}
+      </p>
+      <form onSubmit={submit}>
+        {mode === "signup" && (
+          <>
+            <label>Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ravi Sharma" required />
+          </>
+        )}
+        <label>Email</label>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@email.com" required />
+        <label>Password</label>
+        <input type="password" minLength={6} value={password}
+          onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" required />
+        {message && <p className="error">{message}</p>}
+        <button className="primary" type="submit" disabled={busy}>
+          {busy ? "Please wait..." : mode === "signup" ? "Get started" : "Log in"}
+        </button>
+      </form>
+      <p className="switch">
+        {mode === "signup" ? "Already have an account? " : "New here? "}
+        <button className="link" type="button"
+          onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setMessage(""); }}>
+          {mode === "signup" ? "Log in" : "Create account"}
+        </button>
+      </p>
+    </div>
   );
 }
 

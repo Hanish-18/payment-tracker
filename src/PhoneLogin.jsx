@@ -70,49 +70,46 @@ export default function PhoneLogin() {
   }
 
   return (
-    <>
-      <div className="topbar"><span className="brand">SplitPay</span></div>
-      <div className="auth">
-        <h1>{step === "enter" ? "Log in with mobile" : "Enter the code"}</h1>
-        <p className="sub">
-          {step === "enter"
-            ? "We will send a one-time code to your mobile number."
-            : `Type the code sent to ${e164}.`}
-        </p>
+    <div className="sa-form">
+      <h1>{step === "enter" ? "Log in with mobile" : "Enter the code"}</h1>
+      <p className="sub">
+        {step === "enter"
+          ? "We will send a one-time code to your mobile number."
+          : `Type the code sent to ${e164}.`}
+      </p>
 
-        {step === "enter" ? (
-          <form onSubmit={sendCode}>
-            <label>Your name (only needed for a new account)</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} />
-            <label>Mobile number</label>
-            <input inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-              placeholder="9876543210" required />
-            {msg && <p className="error">{msg}</p>}
-            <button className="primary" type="submit" disabled={busy}>
-              {busy ? "Please wait..." : "Send code"}
+      {step === "enter" ? (
+        <form onSubmit={sendCode}>
+          <label>Your name (only for a new account)</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ravi Sharma" />
+          <label>Mobile number</label>
+          <input inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+            placeholder="9876543210" required />
+          {msg && <p className="error">{msg}</p>}
+          <button className="primary" type="submit" disabled={busy}>
+            {busy ? "Please wait..." : "Send code"}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={verify}>
+          <label>One-time code</label>
+          <input inputMode="numeric" autoComplete="one-time-code" value={code}
+            onChange={(e) => setCode(e.target.value)} placeholder="123456" required />
+          {msg && <p className="sub" style={{ marginTop: 12, marginBottom: 0 }}>{msg}</p>}
+          <button className="primary" type="submit" disabled={busy}>
+            {busy ? "Please wait..." : "Verify and log in"}
+          </button>
+          <p className="switch">
+            <button className="link" type="button" disabled={wait > 0 || busy} onClick={sendCode}>
+              {wait > 0 ? `Resend code in ${wait}s` : "Resend code"}
             </button>
-          </form>
-        ) : (
-          <form onSubmit={verify}>
-            <label>One-time code</label>
-            <input inputMode="numeric" autoComplete="one-time-code" value={code}
-              onChange={(e) => setCode(e.target.value)} placeholder="123456" required />
-            {msg && <p className="sub" style={{ marginTop: 12, marginBottom: 0 }}>{msg}</p>}
-            <button className="primary" type="submit" disabled={busy}>
-              {busy ? "Please wait..." : "Verify and log in"}
+            {" · "}
+            <button className="link" type="button" onClick={() => { setStep("enter"); setMsg(""); }}>
+              Change number
             </button>
-            <p className="switch">
-              <button className="link" type="button" disabled={wait > 0 || busy} onClick={sendCode}>
-                {wait > 0 ? `Resend code in ${wait}s` : "Resend code"}
-              </button>
-              {" · "}
-              <button className="link" type="button" onClick={() => { setStep("enter"); setMsg(""); }}>
-                Change number
-              </button>
-            </p>
-          </form>
-        )}
-      </div>
-    </>
+          </p>
+        </form>
+      )}
+    </div>
   );
 }
