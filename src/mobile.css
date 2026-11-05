@@ -1,0 +1,63 @@
+/* Phone look (matches the mobile mockup). Import this AFTER shell.css and dashboard.css. */
+
+/* Desktop defaults for the new pieces */
+.sp-nav .m { display: none; }
+.sp-pop .only-m { display: none; }
+.sp-fab { display: none; }
+.sp-ttl h1 .m, .sp-ttl p .m { display: none; }
+
+@media (max-width: 900px) {
+  html, body { overscroll-behavior-y: none; }
+  .sp-shell { display: block; min-height: 100vh; min-height: 100dvh; }
+  .sp-body { padding: calc(14px + env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom)); }
+
+  /* Header: "Hi, Name" on the left, avatar on the right */
+  .sp-top { gap: 10px; margin-bottom: 16px; align-items: center; }
+  .sp-ttl h1 { font-size: 22px; }
+  .sp-ttl h1 .d, .sp-ttl p .d { display: none; }
+  .sp-ttl h1 .m, .sp-ttl p .m { display: inline; }
+  .sp-ttl p { display: none; }
+  .sp-ttl p.sp-sub.home { display: block; font-size: 13.5px; margin-top: 3px; }
+  .sp-search { display: none; }
+  .sp-bell { width: 40px; height: 40px; }
+  .sp-avatar { width: 44px; height: 44px; }
+  .sp-user .nm, .sp-user .cv { display: none; }
+  .sp-pop .only-m { display: block; }
+  .sp-pop { right: 0; min-width: 220px; }
+
+  /* Bottom navigation: Home, Groups, Expenses, Settlements */
+  .sp-side { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; height: auto; flex-direction: row; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); z-index: 60; background: var(--card); border-top: 1px solid var(--cardline); border-right: 0; border-radius: 22px 22px 0 0; box-shadow: 0 -6px 24px rgba(20, 60, 160, 0.08); }
+  .sp-logo, .sp-app, .sp-mtn { display: none; }
+  .sp-nav { display: flex; width: 100%; justify-content: space-around; }
+  .sp-nav button { flex: 1; flex-direction: column; justify-content: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 6px 2px; width: auto; margin: 0; text-align: center; background: transparent; color: var(--mut); box-shadow: none; border-radius: 12px; }
+  .sp-nav button:nth-child(n+5) { display: none; }
+  .sp-nav button.on { background: transparent; color: var(--pri); box-shadow: none; }
+  .sp-nav button:hover { background: transparent; }
+  .sp-nav .d { display: none; }
+  .sp-nav .m { display: inline; }
+
+  /* Round "+" button for Add Expense */
+  .sp-fab { display: grid; place-items: center; position: fixed; right: 18px; bottom: calc(92px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%; border: 0; background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; font-size: 30px; line-height: 1; box-shadow: 0 10px 24px rgba(29, 98, 240, 0.4); z-index: 70; cursor: pointer; padding: 0; }
+
+  /* Home screen: Net Balance, You Get / You Owe, then the list */
+  .sp-hi, .sp-hi-sub { display: none; }
+  .sp-dash .sp-top { grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 0; }
+  .sp-dash .sp-bal { grid-column: 1 / -1; border-radius: 20px; padding: 20px; }
+  .sp-dash .sp-bal .big { font-size: 36px; }
+  .sp-dash .sp-qa { display: none; }
+  .sp-dash .sp-get, .sp-dash .sp-owe { position: relative; padding: 16px; border-radius: 16px; }
+  .sp-dash .sp-get .lbl, .sp-dash .sp-owe .lbl { margin-top: 0; font-size: 14px; }
+  .sp-dash .sp-get .val, .sp-dash .sp-owe .val { font-size: 26px; margin-top: 2px; }
+  .sp-dash .sp-arrow { position: absolute; right: 14px; bottom: 16px; width: auto; height: auto; font-size: 20px; }
+  .sp-dash .sp-mid { grid-template-columns: 1fr; margin-top: 18px; gap: 0; }
+  .sp-dash .sp-mid > :nth-child(n+2) { display: none; }
+  .sp-dash .sp-bot { display: none; }
+  .sp-dash .sp-mid > .sp-card { background: transparent; border: 0; box-shadow: none; padding: 0; }
+  .sp-dash .sp-h h3 { font-size: 18px; }
+  .sp-dash .sp-exp { background: var(--card); border: 1px solid var(--cardline); border-radius: 16px; padding: 12px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .sp-dash .sp-exp:last-child { border-bottom: 1px solid var(--cardline); }
+
+  /* Other pages: tighter cards so forms fit a phone */
+  .sp-content .card { padding: 16px; border-radius: 18px !important; }
+  .sp-content .stats { grid-template-columns: 1fr 1fr; }
+}

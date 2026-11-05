@@ -14,6 +14,7 @@ import InviteClaim from "./InviteClaim";
 import ProfilePage from "./ProfilePage";
 import "./room.css";
 import "./shell.css";
+import "./mobile.css";
 
 const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
 const sumAmt = (list) => list.reduce((s, e) => s + Number(e.amount), 0);
@@ -22,14 +23,14 @@ const nameOfUser = (session) => {
   return m.name || m.full_name || (session.user.email || "").split("@")[0] || "there";
 };
 
-/* ---------- Sidebar pages ---------- */
+/* ---------- Sidebar pages: key, label, subtitle, icon, short label for phone ---------- */
 const NAV = [
-  ["Dashboard", "Dashboard", "Track expenses, split bills, and settle easily.", "home"],
-  ["Groups", "Groups", "Friends and people you split with.", "users"],
-  ["Expenses", "Expenses", "Add and split expenses.", "receipt"],
-  ["Settlements", "Settlements", "Clear your dues in one tap.", "swap"],
-  ["Payments", "Payments", "Record payments and see your history.", "card"],
-  ["Analytics", "Analytics", "See where your money goes.", "chart"],
+  ["Dashboard", "Dashboard", "Track expenses, split bills, and settle easily.", "home", "Home"],
+  ["Groups", "Groups", "Friends and people you split with.", "users", "Groups"],
+  ["Expenses", "Expenses", "Add and split expenses.", "receipt", "Expenses"],
+  ["Settlements", "Settlements", "Clear your dues in one tap.", "swap", "Settlements"],
+  ["Payments", "Payments", "Record payments and see your history.", "card", "Payments"],
+  ["Analytics", "Analytics", "See where your money goes.", "chart", "Analytics"],
 ];
 const PROFILE_META = ["Profile", "Your account and settings."];
 const GO = {
@@ -63,7 +64,11 @@ function useOutside(ref, fn) {
       if (ref.current && !ref.current.contains(e.target)) fn();
     };
     document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    document.addEventListener("touchstart", h);
+    return () => {
+      document.removeEventListener("mousedown", h);
+      document.removeEventListener("touchstart", h);
+    };
   }, []);
 }
 
@@ -258,6 +263,10 @@ function ProfileMenu({ name, go }) {
   const ref = useRef(null);
   const { dark } = useTheme();
   useOutside(ref, () => setOpen(false));
+  function pick(page) {
+    setOpen(false);
+    go(page);
+  }
   return (
     <div className="sp-ib" ref={ref}>
       <button type="button" className="sp-user" onClick={() => setOpen(!open)}>
@@ -267,7 +276,9 @@ function ProfileMenu({ name, go }) {
       </button>
       {open && (
         <div className="sp-pop">
-          <button type="button" onClick={() => { setOpen(false); go("Profile"); }}>Profile</button>
+          <button type="button" onClick={() => pick("Profile")}>Profile</button>
+          <button type="button" className="only-m" onClick={() => pick("Payments")}>Payments</button>
+          <button type="button" className="only-m" onClick={() => pick("Analytics")}>Analytics</button>
           <button type="button" onClick={() => setTheme(dark ? "light" : "dark")}>
             {dark ? "☀️ Light mode" : "🌙 Dark mode"}
           </button>
@@ -340,6 +351,7 @@ function Shell({ session }) {
   const requests = connections.filter((c) => c.status === "pending" && c.addressee === myId).length;
   const owes = entries.filter((e) => e.status !== "Settled" && e.paid_by === "friend").slice(0, 3);
   const meta = NAV.find((n) => n[0] === page) || [null, PROFILE_META[0], PROFILE_META[1]];
+  const home = page === "Dashboard";
 
   return (
     <div className="sp-shell">
@@ -354,10 +366,11 @@ function Shell({ session }) {
         </div>
 
         <nav className="sp-nav">
-          {NAV.map(([key, label, , icon]) => (
+          {NAV.map(([key, label, , icon, short]) => (
             <button key={key} type="button" className={page === key ? "on" : ""} onClick={() => setPage(key)}>
               <Icon name={icon} />
-              {label}
+              <span className="d">{label}</span>
+              <span className="m">{short}</span>
             </button>
           ))}
         </nav>
@@ -369,16 +382,28 @@ function Shell({ session }) {
         </div>
 
         <svg className="sp-mtn" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0 120V70L50 30l35 40 40-55 45 60 30-20 40 40v55z" fill="#b9a2f6" opacity=".55" />
-          <path d="M0 120V92l40-30 40 34 50-45 60 50 50-24v43z" fill="#8f63ee" />
+          <path d="M0 120V70L50 30l35 40 40-55 45 60 30-20 40 40v55z" />
+          <path d="M0 120V92l40-30 40 34 50-45 60 50 50-24v43z" />
         </svg>
       </aside>
 
       <div className="sp-body">
         <header className="sp-top">
           <div className="sp-ttl">
-            <h1>{meta[1]}</h1>
-            <p className="sp-sub">{meta[2]}</p>
+            {home ? (
+              <>
+                <h1><span className="d">Dashboard</span><span className="m">Hi, {myName} 👋</span></h1>
+                <p className="sp-sub home">
+                  <span className="d">Track expenses, split bills, and settle easily.</span>
+                  <span className="m">Track, split and settle expenses</span>
+                </p>
+              </>
+            ) : (
+              <>
+                <h1>{meta[1]}</h1>
+                <p className="sp-sub">{meta[2]}</p>
+              </>
+            )}
           </div>
           <TopSearch entries={entries} friends={friends} go={setPage} />
           <Bell requests={requests} owes={owes} go={setPage} />
@@ -445,6 +470,12 @@ function Shell({ session }) {
           {page === "Profile" && <ProfilePage session={session} profiles={profiles} />}
         </main>
       </div>
+
+      {home && (
+        <button type="button" className="sp-fab" aria-label="Add expense" onClick={() => setPage("Expenses")}>
+          +
+        </button>
+      )}
     </div>
   );
 }
@@ -679,7 +710,7 @@ function Friends({ friends, connections, profiles, entries, myId, reload, setErr
 }
 
 /* ---------- Analytics ---------- */
-const COLORS = ["#7c5cf0", "#2f8cf5", "#f59e3a", "#3ccf91", "#ef6a8a", "#14b8a6", "#8aa7ff"];
+const COLORS = ["#4a6cf7", "#1aa0f6", "#f8a53a", "#3ccf6e", "#ef6a8a", "#14b8a6", "#8aa7ff"];
 
 function SpendingChart({ entries }) {
   const [by, setBy] = useState("mode");
