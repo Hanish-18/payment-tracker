@@ -2,17 +2,17 @@ import { useState, useMemo } from "react";
 import "./dashboard.css";
 
 const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
-const COLORS = ["#7c5cf0", "#2f8cf5", "#f59e3a", "#3ccf91", "#ef6a8a", "#14b8a6"];
+const COLORS = ["#4a6cf7", "#1aa0f6", "#f8a53a", "#3ccf6e", "#ef6a8a", "#14b8a6"];
 const colorOf = (s) => COLORS[[...String(s || "?")].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
 
 // Entry ke note se category pehchanna
 const CATS = [
-  ["Food & Dining", /food|dinner|lunch|breakfast|cafe|restaurant|pizza|meal|snack|tea|coffee|party/i, "#7c5cf0", "🍴"],
-  ["Travel", /cab|taxi|uber|ola|fuel|petrol|bus|train|flight|metro|travel|trip|movie/i, "#2f8cf5", "🚗"],
-  ["Accommodation", /hotel|stay|room|rent|hostel|booking/i, "#f59e3a", "🛏️"],
-  ["Shopping", /shop|cloth|amazon|flipkart|mall|gift|buy|grocer/i, "#3ccf91", "🛒"],
+  ["Food & Dining", /food|dinner|lunch|breakfast|cafe|restaurant|pizza|meal|snack|tea|coffee|party/i, "#4a6cf7", "🍴"],
+  ["Travel", /cab|taxi|uber|ola|fuel|petrol|bus|train|flight|metro|travel|trip|movie/i, "#1aa0f6", "🚗"],
+  ["Accommodation", /hotel|stay|room|rent|hostel|booking/i, "#f8a53a", "🛏️"],
+  ["Shopping", /shop|cloth|amazon|flipkart|mall|gift|buy|grocer/i, "#3ccf6e", "🛒"],
 ];
-const OTHERS = ["Others", null, "#c9c6e6", "🧾"];
+const OTHERS = ["Others", null, "#c8ccd8", "🧾"];
 const catOf = (e) => CATS.find((c) => c[1].test(e.note || "")) || OTHERS;
 
 function Avatar({ name }) {
@@ -30,7 +30,7 @@ function Donut({ parts, total }) {
   return (
     <div className="sp-donut">
       <svg width="170" height="170" viewBox="0 0 170 170">
-        <circle cx="85" cy="85" r={R} fill="none" stroke="#eeeaf8" strokeWidth="24" />
+        <circle cx="85" cy="85" r={R} fill="none" style={{ stroke: "var(--line)" }} strokeWidth="24" />
         {total > 0 &&
           parts.map(([name, value, color]) => {
             const len = (value / total) * C;
@@ -116,8 +116,9 @@ export default function Dashboard({ entries = [], friends = [], groups = [], nam
             {data.net >= 0 ? `You will get ${rupee(data.net)}` : `You will pay ${rupee(-data.net)}`}
           </div>
           <svg width="110" height="90" viewBox="0 0 110 90" aria-hidden="true">
-            <rect x="8" y="14" width="94" height="68" rx="16" fill="#fff" />
-            <rect x="58" y="38" width="44" height="24" rx="12" fill="#c9b3ff" />
+            <rect x="8" y="14" width="94" height="68" rx="16" fill="#4d8dff" />
+            <rect x="8" y="14" width="94" height="68" rx="16" fill="none" stroke="#bcd6ff" strokeWidth="3" />
+            <rect x="58" y="38" width="44" height="24" rx="12" fill="#2f6df0" />
             <circle cx="74" cy="50" r="5" fill="#fff" />
           </svg>
         </div>
@@ -163,7 +164,7 @@ export default function Dashboard({ entries = [], friends = [], groups = [], nam
             const c = catOf(e);
             return (
               <div className="sp-exp" key={e.id}>
-                <div className="sp-ico" style={{ background: c[2] + "22" }}>{c[3]}</div>
+                <div className="sp-ico" style={{ background: c[2] + "26" }}>{c[3]}</div>
                 <div className="sp-main">
                   <div className="sp-t">{e.note || e.friend}</div>
                   <div className="sp-s">{e.friend}{e.payment_date ? " • " + new Date(e.payment_date).toLocaleDateString("en-IN") : ""}</div>
