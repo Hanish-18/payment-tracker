@@ -1,15 +1,13 @@
 /* Phone "Payments" flow (matches the mockup):
    Payments home  ->  Add Payment form  ->  Payment Details
-   Pay Now / Scan UPI open the Pay via UPI flow (MobileUpi).
    The old PaymentsHub (full history, reminders) opens from "See All" and "Request". */
 import { useState } from "react";
 import "./mobile-payments.css";
 import { supabase } from "./supabaseClient";
 import { hue, ini } from "./DesktopHome";
-import MobileUpi from "./MobileUpi";
 
-const money = (n) => "₹" + Math.abs(Number(n)).toLocaleString("en-IN");
-const dtext = (x) => new Date(x).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+export const money = (n) => "₹" + Math.abs(Number(n)).toLocaleString("en-IN");
+export const dtext = (x) => new Date(x).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 const IC = {
   back: <path d="M15 5l-7 7 7 7" />,
@@ -31,8 +29,13 @@ const IC = {
   share: (<><circle cx="6" cy="12" r="2.4" /><circle cx="18" cy="6" r="2.4" /><circle cx="18" cy="18" r="2.4" /><path d="M8.2 11l7.6-4M8.2 13l7.6 4" /></>),
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   clock: (<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>),
+  info: (<><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>),
+  receipt: (<><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" /><path d="M9 8h6M9 12h6" /></>),
+  vdots: (<><circle cx="12" cy="5" r="1.5" fill="currentColor" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /><circle cx="12" cy="19" r="1.5" fill="currentColor" /></>),
+  arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+  cdown: <path d="M6 9l6 6 6-6" />,
 };
-function Ic({ n, s = 22 }) {
+export function Ic({ n, s = 22 }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{IC[n]}</svg>
@@ -67,7 +70,7 @@ const KEYS = [
   ["Stay", /hotel|stay|room|rent|hostel|airbnb/i],
   ["Transport", /cab|uber|ola|fuel|petrol|diesel|auto|metro|taxi|transport/i],
 ];
-function parseNote(note, mode) {
+export function parseNote(note, mode) {
   const raw = String(note || "").trim();
   let cat = null;
   let title = raw;
@@ -77,11 +80,12 @@ function parseNote(note, mode) {
   if (!cat) {
     for (const [c, re] of KEYS) if (re.test(raw)) { cat = c; break; }
   }
+  title = title.replace(/^split:\s*/i, "").replace(/\s*\(\d+ people[^)]*\)/, "").replace(/\s+—\s+.*$/, "").trim();
   return { cat: cat || "Other", title: title || mode || "Payment" };
 }
-const catIcon = (c) => ({ Food: "food", Travel: "travel", Stay: "stay", Transport: "transport" }[c] || "card");
+export const catIcon = (c) => ({ Food: "food", Travel: "travel", Stay: "stay", Transport: "transport" }[c] || "card");
 
-const ago = (x) => {
+export const ago = (x) => {
   const t = new Date(x).getTime();
   if (!t) return "";
   const m = Math.max(1, Math.round((Date.now() - t) / 60000));
@@ -92,6 +96,25 @@ const ago = (x) => {
   if (d < 30) return `${d}d ago`;
   return new Date(x).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 };
+
+/* Works out the people and the total of a split, from the saved entries */
+export function splitInfo(e, entries) {
+  const note = String(e.note || "");
+  const isSplit = /split:/i.test(note);
+  const sibs = isSplit
+    ? entries.filter((x) => x.note === e.note && x.payment_date === e.payment_date && x.paid_by === e.paid_by)
+    : [e];
+  const m = note.match(/\((\d+) people(?:, (custom|percentage))?(?:, total ([\d.]+))?\)/);
+  const count = m ? Number(m[1]) : sibs.length + 1;
+  const kind = m && m[2] ? m[2] : "equal";
+  const sum = sibs.reduce((t, x) => t + Number(x.amount), 0);
+  let total;
+  if (m && m[3]) total = Number(m[3]);
+  else if (!isSplit) total = Number(e.amount);
+  else if (e.paid_by === "me") total = sum + Number(e.amount);
+  else total = Number(e.amount) * count;
+  return { sibs, total, isSplit, count, kind };
+}
 
 const todayStr = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
@@ -217,7 +240,7 @@ function AddPayment({ friends, myName, myId, onBack, onDone, setError, go }) {
                   );
                 })}
               </div>
-              <span className="pm-count">{count} people</span>
+              <span className="pm-count">{count} {count === 1 ? "person" : "people"}</span>
             </div>
           )}
 
@@ -242,14 +265,11 @@ function AddPayment({ friends, myName, myId, onBack, onDone, setError, go }) {
 }
 
 /* ============================ Payment Details ============================ */
-function Detail({ e, entries, onBack, go }) {
+export function Detail({ e, entries, onBack, go }) {
   const [copied, setCopied] = useState(false);
   const { cat, title } = parseNote(e.note, e.mode);
   const youPaid = e.paid_by === "me";
-  const sibs = entries.filter((x) => x.note === e.note && x.payment_date === e.payment_date && x.paid_by === e.paid_by);
-  const isSplit = /split:/i.test(String(e.note || ""));
-  const sibSum = sibs.reduce((s, x) => s + Number(x.amount), 0);
-  const total = youPaid ? (isSplit ? sibSum + Number(e.amount) : sibSum) : isSplit ? Number(e.amount) * (sibs.length + 1) : Number(e.amount);
+  const { sibs, total } = splitInfo(e, entries);
 
   const rows = youPaid
     ? [{ n: "You (Paid)", a: total, paid: true, hueName: "You" }, ...sibs.map((x) => ({ n: x.friend, a: x.amount, hueName: x.friend, done: x.status === "Settled" }))]
@@ -316,26 +336,6 @@ export default function MobilePayments({ entries, friends, go, reload, setError,
   const [view, setView] = useState({ t: "hub" });
   const [flash, setFlash] = useState("");
 
-  if (view.t === "upi") {
-    return (
-      <MobileUpi
-        key={view.start}
-        start={view.start}
-        header={header}
-        go={go}
-        myId={myId}
-        setError={setError}
-        onBack={() => setView({ t: "hub" })}
-        onSaved={() => {
-          reload();
-          setView({ t: "hub" });
-          setFlash("Payment saved ✓");
-          setTimeout(() => setFlash(""), 2500);
-        }}
-      />
-    );
-  }
-
   if (view.t === "add") {
     return (
       <AddPayment
@@ -393,9 +393,9 @@ export default function MobilePayments({ entries, friends, go, reload, setError,
 
   const actions = [
     ["plus", "Add Payment", () => setView({ t: "add" }), true],
-    ["send", "Pay Now", () => setView({ t: "upi", start: "hub" })],
+    ["send", "Pay Now", () => go("Settlements")],
     ["down", "Request", () => setView({ t: "all" })],
-    ["qr", "Scan UPI", () => setView({ t: "upi", start: "scan" })],
+    ["qr", "Scan UPI", () => go("Settlements")],
   ];
 
   return (

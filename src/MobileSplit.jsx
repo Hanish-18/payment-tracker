@@ -1,396 +1,365 @@
 /* Phone "Split & Expense" flow (matches the mockup):
-   1) Split & Expense home  ->  2) Split an Expense form  ->  3) Expense Created!
-   Data is saved in the same `entries` table the Payments tab uses. */
+   1) Split & Expense list   2) Split an Expense form   3) Expense Created!  (+ Payment Details)  */
 import { useState } from "react";
-import "./mobile-split.css"; // keeps the shared .ms-bar styles used by the Payments screens
-import "./mobile-split-expense.css";
+import "./mobile-split.css";
 import { supabase } from "./supabaseClient";
 import { hue, ini } from "./DesktopHome";
+import { Detail, Ic, parseNote, catIcon, money, splitInfo } from "./MobilePayments";
 
-const money = (n) => "₹" + Math.abs(Number(n)).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-const r2 = (n) => Math.round(n * 100) / 100;
-
-const IC = {
-  back: <path d="M15 5l-7 7 7 7" />,
-  info: (<><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 7.6v.01" /></>),
-  plus: <path d="M12 5v14M5 12h14" />,
-  down: <path d="M6 9l6 6 6-6" />,
-  check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
-  receipt: (<><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" /><path d="M9 8h6M9 12h6" /></>),
-  bill: (<><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></>),
-  cart: (<><path d="M3 4h2.5l2 11h10l2-8H7" /><circle cx="9" cy="19" r="1.4" /><circle cx="17" cy="19" r="1.4" /></>),
-  fuel: (<><path d="M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M4 21h12M15 9h2.5a1.5 1.5 0 0 1 1.5 1.5V17a1.5 1.5 0 0 0 3 0V9l-3-3" /><path d="M7.5 8h5" /></>),
-  food: <path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M16 3c-2 1-3 4-3 7h3v11" />,
-  plane: <path d="M21 4L3 11l7 3 3 7 8-17z" />,
-  dots: (<><circle cx="12" cy="5" r="1.4" fill="currentColor" /><circle cx="12" cy="12" r="1.4" fill="currentColor" /><circle cx="12" cy="19" r="1.4" fill="currentColor" /></>),
+const r2 = (n) => Math.round(Number(n) * 100) / 100;
+const localDay = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const dayLabel = (k) => {
+  const now = new Date();
+  const y = new Date(now.getTime() - 86400000);
+  if (k === localDay(now)) return "Today";
+  if (k === localDay(y)) return "Yesterday";
+  return new Date(k + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 };
-function Ic({ n, s = 22 }) {
+const kindText = (k) => (k === "custom" ? "Split custom" : k === "percentage" ? "Split by %" : "Split equally");
+
+/* One row per split (the saved entries of one split are joined together) */
+function groupEntries(entries) {
+  const map = new Map();
+  const out = [];
+  for (const e of entries) {
+    if (/split:/i.test(String(e.note || ""))) {
+      const k = `${e.note}|${e.payment_date}|${e.paid_by}`;
+      if (map.has(k)) { map.get(k).members.push(e); continue; }
+      const g = { key: k, e, members: [e] };
+      map.set(k, g);
+      out.push(g);
+    } else {
+      out.push({ key: "i" + e.id, e, members: [e] });
+    }
+  }
+  return out;
+}
+
+function Faces({ names }) {
+  const show = names.slice(0, 2);
+  const more = names.length - show.length;
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{IC[n]}</svg>
+    <span className="sx-avs">
+      {show.map((n, i) => (
+        <i key={i} style={{ background: n === "You" ? "#12327f" : hue(n), marginLeft: i ? -8 : 0 }}>{ini(n)}</i>
+      ))}
+      {more > 0 && <em>+{more}</em>}
+    </span>
   );
 }
 
-/* ---------- helpers to read entries as "expenses" ---------- */
-const cleanTitle = (note, mode) => {
-  let t = String(note || "").trim();
-  t = t.replace(/^(Food|Travel|Stay|Transport|Other) · /, "");
-  t = t.replace(/^split:\s*/i, "");
-  t = t.replace(/\s*\(\d+ people\).*$/i, "");
-  return t || mode || "Payment";
-};
-const iconFor = (t) =>
-  /dinner|lunch|breakfast|cafe|chai|tea|coffee|food|pizza|meal|snack|biryani|burger/i.test(t) ? "food"
-  : /trip|travel|flight|train|ticket|bus|tour/i.test(t) ? "plane"
-  : /fuel|petrol|diesel|cab|uber|ola|auto|taxi/i.test(t) ? "fuel"
-  : "cart";
-const toneFor = (ic) => ({ food: "red", plane: "violet", fuel: "green", cart: "blue" }[ic]);
-
-const dayKey = (e) => String(e.payment_date || e.created_at || "").slice(0, 10);
-const todayKey = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-const dayLabel = (k) => {
-  const t = todayKey();
-  const y = new Date(new Date(t + "T00:00:00").getTime() - 86400000);
-  const yk = new Date(y.getTime() - y.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  if (k === t) return "Today";
-  if (k === yk) return "Yesterday";
-  return new Date(k + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-};
-
-function groupExpenses(entries) {
-  const map = new Map();
-  for (const e of entries) {
-    const key = [e.note, dayKey(e), e.paid_by, e.created_at || ""].join("|");
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(e);
-  }
-  return [...map.values()].map((rows) => {
-    const f = rows[0];
-    const isSplit = /split:/i.test(String(f.note || ""));
-    const m = String(f.note || "").match(/\((\d+) people\)/i);
-    const n = m ? Number(m[1]) : rows.length + 1;
-    const sum = rows.reduce((s, x) => s + Number(x.amount), 0);
-    let total = sum;
-    if (isSplit) total = f.paid_by === "me" ? (sum * n) / Math.max(1, n - 1) : Number(f.amount) * n;
-    const title = cleanTitle(f.note, f.mode);
-    return {
-      id: f.id,
-      title,
-      icon: iconFor(title),
-      total: Math.round(total),
-      paidByMe: f.paid_by === "me",
-      payer: f.paid_by === "me" ? "You" : f.friend,
-      people: [...new Set(rows.map((x) => x.friend))],
-      settled: rows.every((x) => x.status === "Settled"),
-      day: dayKey(f),
-      isSplit,
-    };
-  });
-}
-
 /* ============================ Step 2: Split an Expense ============================ */
-function SplitForm({ friends, myName, myId, onBack, onCreated, setError, go }) {
+function SplitForm({ friends, myName, myId, onBack, onDone, setError, go }) {
   const [amount, setAmount] = useState("");
   const [title, setTitle] = useState("");
   const [payer, setPayer] = useState("me");
   const [sel, setSel] = useState([]);
-  const [type, setType] = useState("equal");
+  const [kind, setKind] = useState("equal");
   const [vals, setVals] = useState({});
+  const [hint, setHint] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
   const payerFriend = payer === "me" ? null : friends.find((f) => String(f.id) === String(payer));
-  const isOn = (f) => sel.includes(String(f.id)) || (payerFriend && payerFriend.id === f.id);
-  const toggle = (f) => {
-    if (payerFriend && payerFriend.id === f.id) return;
-    const k = String(f.id);
-    setSel((s) => (s.includes(k) ? s.filter((x) => x !== k) : [...s, k]));
-  };
-
-  const people = [
-    { key: "me", name: myName },
-    ...friends.filter(isOn).map((f) => ({ key: String(f.id), name: f.name })),
-  ];
+  const chosen = friends.filter((f) => sel.map(String).includes(String(f.id)) || (payerFriend && f.id === payerFriend.id));
+  const people = [{ key: "me", name: "You" }, ...chosen.map((f) => ({ key: String(f.id), name: f.name }))];
   const count = people.length;
   const amt = Number(amount) || 0;
-  const shareOf = (p) =>
-    type === "equal" ? r2(amt / count)
-    : type === "custom" ? Number(vals[p.key]) || 0
-    : r2((amt * (Number(vals[p.key]) || 0)) / 100);
+  const toggle = (id) => setSel((s) => (s.map(String).includes(String(id)) ? s.filter((x) => String(x) !== String(id)) : [...s, id]));
 
-  const changeType = (t) => { setType(t); setVals({}); setMsg(""); };
+  const shares = {};
+  people.forEach((p) => {
+    if (kind === "equal") shares[p.key] = r2(amt / count);
+    else if (kind === "custom") shares[p.key] = r2(vals[p.key] || 0);
+    else shares[p.key] = r2((amt * (Number(vals[p.key]) || 0)) / 100);
+  });
+  const sumVals = people.reduce((t, p) => t + (Number(vals[p.key]) || 0), 0);
 
   async function save(rows) {
     let last = null;
     for (const mode of ["UPI", "Cash", "Other"]) {
-      const { error } = await supabase.from("entries").insert(rows.map((r) => ({ ...r, mode })));
-      if (!error) return null;
+      const { data, error } = await supabase.from("entries").insert(rows.map((r) => ({ ...r, mode }))).select("id");
+      if (!error) return { id: data && data[0] ? data[0].id : null };
       last = error;
-      if (!/mode|check/i.test(error.message)) return error;
+      if (!/mode|check/i.test(error.message)) return { error };
     }
-    return last;
+    return { error: last };
   }
 
   async function submit() {
     setMsg("");
-    if (!(amt > 0)) { setMsg("Enter the amount."); return; }
-    if (!title.trim()) { setMsg("Enter what the expense was for."); return; }
-    if (count < 2) { setMsg("Pick at least one person to split with."); return; }
-    if (type === "custom") {
-      const sum = r2(people.reduce((s, p) => s + shareOf(p), 0));
-      if (Math.abs(sum - amt) > 0.01) { setMsg(`Amounts add up to ${money(sum)}. They should add up to ${money(amt)}.`); return; }
-    }
-    if (type === "pct") {
-      const sum = people.reduce((s, p) => s + (Number(vals[p.key]) || 0), 0);
-      if (Math.abs(sum - 100) > 0.01) { setMsg(`Percentages add up to ${r2(sum)}%. They should add up to 100%.`); return; }
-    }
-    const me = people[0];
-    const note = `Split: ${title.trim()} (${count} people)`;
-    const base = { user_id: myId, note, payment_date: todayKey(), status: "Pending" };
+    const t = title.trim();
+    if (!(amt > 0)) { setMsg("Please enter the amount."); return; }
+    if (!t) { setMsg("Please enter what the expense is for."); return; }
+    if (count < 2) { setMsg("Pick at least one friend to split with."); return; }
+    if (kind === "custom" && Math.abs(sumVals - amt) > 0.01) { setMsg(`Custom amounts must add up to ${money(amt)}.`); return; }
+    if (kind === "percentage" && Math.abs(sumVals - 100) > 0.01) { setMsg("Percentages must add up to 100%."); return; }
+
+    const note = kind === "equal"
+      ? `Split: ${t} (${count} people)`
+      : `Split: ${t} (${count} people, ${kind}, total ${amt})`;
+    const base = { user_id: myId, note, payment_date: localDay(new Date()), status: "Pending" };
     let rows;
     if (payerFriend) {
-      const mine = shareOf(me);
-      if (!(mine > 0)) { setMsg("Your share is ₹0, so there is nothing to record."); return; }
-      rows = [{ ...base, friend: payerFriend.name, paid_by: "friend", amount: mine }];
+      if (!(shares.me > 0)) { setMsg("Your share is 0, so there is nothing to record."); return; }
+      rows = [{ ...base, friend: payerFriend.name, paid_by: "friend", amount: shares.me }];
     } else {
-      rows = people.slice(1).map((p) => ({ ...base, friend: p.name, paid_by: "me", amount: shareOf(p) })).filter((r) => r.amount > 0);
+      rows = people.filter((p) => p.key !== "me" && shares[p.key] > 0).map((p) => ({ ...base, friend: p.name, paid_by: "me", amount: shares[p.key] }));
+      if (rows.length === 0) { setMsg("Nobody has a share to pay."); return; }
     }
     setBusy(true);
-    const error = await save(rows);
+    const res = await save(rows);
     setBusy(false);
-    if (error) { setError(error.message); setMsg(error.message); return; }
+    if (res.error) { setError(res.error.message); setMsg(res.error.message); return; }
     setError("");
-    onCreated({ title: title.trim(), amt, count, type, each: r2(amt / count), payer: payerFriend ? payerFriend.name : "You" });
+    onDone({ id: res.id, title: t, total: amt, count, kind, each: r2(amt / count), youPaid: !payerFriend });
   }
 
+  const typeBtn = (k, label) => (
+    <button type="button" className={kind === k ? "on" : ""} onClick={() => { setKind(k); setVals({}); }}>{label}</button>
+  );
+
   return (
-    <div className="se se-pad">
-      <div className="se-bar">
-        <button type="button" className="se-ib" onClick={onBack} aria-label="Back"><Ic n="back" /></button>
+    <div className="ms sx">
+      <div className="ms-bar">
+        <button type="button" className="ms-ib" onClick={onBack} aria-label="Back"><Ic n="back" /></button>
         <h2>Split an Expense</h2>
-        <span className="se-ib" aria-hidden="true"><Ic n="info" /></span>
+        <button type="button" className="ms-ib" onClick={() => setHint(!hint)} aria-label="Info"><Ic n="info" /></button>
+      </div>
+      {hint && <p className="sx-hint">Enter the amount, who paid, who is in and how to split it.</p>}
+
+      <div className="sx-amt">
+        <span className="sx-amt-ic"><Ic n="receipt" s={34} /></span>
+        <div className="sx-amt-body">
+          <div className="sx-amt-row">
+            <b>₹</b>
+            <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="1,200" inputMode="decimal" />
+          </div>
+          <input className="sx-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Dinner at Cafe" />
+        </div>
       </div>
 
-      <div className="se-amt">
-        <span className="se-amt-ic"><Ic n="receipt" s={34} /></span>
-        <span className="se-amt-mid">
-          <label className="se-rs"><b>₹</b>
-            <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="1,200" inputMode="decimal" aria-label="Amount" />
-          </label>
-          <input className="se-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Dinner at Cafe" aria-label="What was it for" />
-        </span>
-      </div>
-
-      <h3 className="se-h3">Paid by</h3>
-      <label className="se-payer">
-        <i style={{ background: payerFriend ? hue(payerFriend.name) : "#12327f" }}>{ini(payerFriend ? payerFriend.name : myName)}</i>
-        <span>{payerFriend ? payerFriend.name : "You"}</span>
-        <Ic n="down" s={18} />
-        <select value={payer} onChange={(e) => setPayer(e.target.value)} aria-label="Paid by">
-          <option value="me">You ({myName})</option>
+      <h3 className="sx-lbl">Paid by</h3>
+      <label className="sx-payer">
+        <span className="sx-av" style={{ background: payerFriend ? hue(payerFriend.name) : "#12327f" }}>{ini(payerFriend ? payerFriend.name : myName)}</span>
+        <select value={payer} onChange={(e) => setPayer(e.target.value)}>
+          <option value="me">You</option>
           {friends.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
         </select>
+        <Ic n="cdown" s={18} />
       </label>
 
-      <div className="se-row">
-        <h3 className="se-h3">Split with</h3>
-        <span className="se-cnt">{count} {count === 1 ? "person" : "people"}</span>
+      <div className="sx-lbl-row">
+        <h3 className="sx-lbl">Split with</h3>
+        <span className="sx-cnt">{count} {count === 1 ? "person" : "people"}</span>
       </div>
-      <div className="se-faces">
-        <span className="se-face on static">
+      <div className="sx-faces">
+        <span className="sx-face on">
           <i style={{ background: "#12327f" }}>{ini(myName)}</i>
           <small>You</small>
         </span>
-        {friends.map((f) => (
-          <button key={f.id} type="button" className={"se-face" + (isOn(f) ? " on" : "")} onClick={() => toggle(f)} aria-pressed={isOn(f)}>
-            <i style={{ background: hue(f.name) }}>{ini(f.name)}{isOn(f) && <em><Ic n="check" s={12} /></em>}</i>
-            <small>{f.name.split(" ")[0]}</small>
-          </button>
-        ))}
-        <button type="button" className="se-face add" onClick={() => go("Groups")} aria-label="Add a friend">
+        {friends.map((f) => {
+          const on = sel.map(String).includes(String(f.id)) || (payerFriend && payerFriend.id === f.id);
+          return (
+            <button type="button" key={f.id} className={"sx-face" + (on ? " on" : "")} onClick={() => toggle(f.id)}>
+              <i style={{ background: hue(f.name) }}>{ini(f.name)}</i>
+              <small>{String(f.name).split(" ")[0]}</small>
+            </button>
+          );
+        })}
+        <button type="button" className="sx-face add" onClick={() => go("Groups")}>
           <i><Ic n="plus" s={22} /></i>
           <small>Add</small>
         </button>
       </div>
 
-      <h3 className="se-h3">Split Type</h3>
-      <div className="se-types">
-        {[["equal", "Equal"], ["custom", "Custom"], ["pct", "Percentage"]].map(([k, l]) => (
-          <button key={k} type="button" className={type === k ? "on" : ""} onClick={() => changeType(k)}>{l}</button>
-        ))}
+      <h3 className="sx-lbl">Split Type</h3>
+      <div className="sx-type">
+        {typeBtn("equal", "Equal")}
+        {typeBtn("custom", "Custom")}
+        {typeBtn("percentage", "Percentage")}
       </div>
 
-      {type !== "equal" && (
-        <div className="se-shares">
+      {kind !== "equal" && (
+        <div className="sx-custom">
           {people.map((p) => (
-            <label key={p.key} className="se-share">
+            <div className="sx-crow" key={p.key}>
               <i style={{ background: p.key === "me" ? "#12327f" : hue(p.name) }}>{ini(p.name)}</i>
-              <b>{p.key === "me" ? "You" : p.name}</b>
-              <span className="se-inp">
-                {type === "custom" && <em>₹</em>}
-                <input
-                  value={vals[p.key] ?? ""}
-                  onChange={(e) => setVals((v) => ({ ...v, [p.key]: e.target.value.replace(/[^0-9.]/g, "") }))}
-                  placeholder={type === "custom" ? String(r2(amt / count) || 0) : String(r2(100 / count))}
-                  inputMode="decimal"
-                />
-                {type === "pct" && <em>%</em>}
+              <b>{p.name}</b>
+              <span className="sx-cin">
+                {kind === "custom" && <u>₹</u>}
+                <input value={vals[p.key] || ""} inputMode="decimal" placeholder="0"
+                  onChange={(e) => setVals((v) => ({ ...v, [p.key]: e.target.value.replace(/[^0-9.]/g, "") }))} />
+                {kind === "percentage" && <u>%</u>}
               </span>
-            </label>
+            </div>
           ))}
+          <p className="sx-left">
+            {kind === "custom"
+              ? `${money(Math.abs(amt - sumVals))} ${amt - sumVals >= 0 ? "left to assign" : "over"}`
+              : `${r2(Math.abs(100 - sumVals))}% ${100 - sumVals >= 0 ? "left to assign" : "over"}`}
+          </p>
         </div>
       )}
-      {type === "equal" && amt > 0 && count > 1 && (
-        <p className="se-hint">{money(r2(amt / count))} each</p>
+
+      {kind === "equal" && amt > 0 && count > 1 && (
+        <p className="sx-each">{money(r2(amt / count))} each</p>
       )}
 
-      {msg && <p className="se-err" role="alert">{msg}</p>}
-      <button type="button" className="se-cta" onClick={submit} disabled={busy}>
-        {busy ? "Saving..." : <>Create Expense <Ic n="back" s={20} /></>}
+      {msg && <p className="sx-err">{msg}</p>}
+      <button type="button" className="sx-cta sx-sticky" onClick={submit} disabled={busy}>
+        {busy ? "Saving..." : <>Create Expense <Ic n="arrow" s={20} /></>}
       </button>
     </div>
   );
 }
 
-/* ============================ Step 3: Expense Created ============================ */
-function Done({ r, onBack, onAgain, go }) {
-  const how =
-    r.type === "equal" ? `₹${r.amt.toLocaleString("en-IN")} split equally among ${r.count} people (${money(r.each)} each)`
-    : r.type === "custom" ? `₹${r.amt.toLocaleString("en-IN")} split by custom amounts among ${r.count} people`
-    : `₹${r.amt.toLocaleString("en-IN")} split by percentage among ${r.count} people`;
-  const ic = iconFor(r.title);
-  return (
-    <div className="se se-pad">
-      <div className="se-bar">
-        <button type="button" className="se-ib" onClick={onBack} aria-label="Back"><Ic n="back" /></button>
-        <h2 />
-        <span className="se-ib ghost" />
-      </div>
+/* ============================ Main ============================ */
+export default function MobileSplit({ entries, friends, go, reload, setError, myId, myName, header, splitHub, paymentsHub }) {
+  const [view, setView] = useState({ t: "hub" });
+  const [pill, setPill] = useState("All");
 
-      <div className="se-ok" aria-hidden="true">
-        <span className="se-ok-ring"><span className="se-ok-dot"><Ic n="check" s={44} /></span></span>
-      </div>
-      <h1 className="se-done-h">Expense Created!</h1>
-      <p className="se-done-p">{how}</p>
-
-      <div className="se-card">
-        <span className={"se-row-ic " + toneFor(ic)}><Ic n={ic} s={24} /></span>
-        <span className="se-card-mid">
-          <b>{r.title}</b>
-          <small>{r.payer === "You" ? "You paid" : `${r.payer} paid`} · {r.count} people</small>
-        </span>
-        <b className="se-card-amt">{money(r.amt)}</b>
-      </div>
-
-      <button type="button" className="se-cta" onClick={() => go("Payments")}>View Details</button>
-      <button type="button" className="se-ghost" onClick={onAgain}>Add Another Expense</button>
-    </div>
-  );
-}
-
-/* ============================ Step 1: Split & Expense home ============================ */
-export default function MobileSplit({ entries, friends, go, reload, setError, myId, myName, header }) {
-  const [step, setStep] = useState("home");
-  const [filter, setFilter] = useState("all");
-  const [result, setResult] = useState(null);
-  const [formKey, setFormKey] = useState(0);
-
-  if (step === "form") {
+  if (view.t === "form") {
     return (
       <SplitForm
-        key={formKey}
+        key={view.n || 0}
         friends={friends}
         myName={myName}
         myId={myId}
         go={go}
         setError={setError}
-        onBack={() => setStep("home")}
-        onCreated={(r) => { setResult(r); reload(); setStep("done"); }}
+        onBack={() => setView({ t: "hub" })}
+        onDone={(d) => { reload(); setView({ t: "done", d }); }}
       />
     );
   }
-  if (step === "done" && result) {
+
+  if (view.t === "done") {
+    const d = view.d;
+    const ready = d.id && entries.some((x) => String(x.id) === String(d.id));
+    const cat = parseNote(d.title).cat;
     return (
-      <Done
-        r={result}
-        go={go}
-        onBack={() => setStep("home")}
-        onAgain={() => { setFormKey((k) => k + 1); setStep("form"); }}
-      />
+      <div className="ms sx">
+        <div className="ms-bar">
+          <button type="button" className="ms-ib" onClick={() => setView({ t: "hub" })} aria-label="Back"><Ic n="back" /></button>
+          <span className="ms-ib ghost" />
+        </div>
+        <div className="sx-ok">
+          <svg viewBox="0 0 160 160" aria-hidden="true">
+            {[0, 45, 90, 135, 180, 225, 270, 315].map((a, i) => (
+              <line key={a} x1="80" y1="6" x2="80" y2={i % 2 ? 14 : 18} stroke={i % 2 ? "#7ddf9e" : "#1fa774"} strokeWidth="4" strokeLinecap="round" transform={`rotate(${a} 80 80)`} />
+            ))}
+            <circle cx="80" cy="80" r="58" fill="rgba(34,197,94,0.16)" />
+            <circle cx="80" cy="80" r="44" fill="#1fa774" />
+            <path d="M60 81l14 14 27-29" fill="none" stroke="#fff" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <h2 className="sx-ok-h">Expense Created!</h2>
+        <p className="sx-ok-p">
+          {d.kind === "equal"
+            ? `${money(d.total)} split equally among ${d.count} people (${money(d.each)} each)`
+            : `${money(d.total)} split among ${d.count} people`}
+        </p>
+        <div className="sx-sum">
+          <span className={"sx-ic c-" + cat}><Ic n={catIcon(cat)} s={24} /></span>
+          <span className="sx-mid"><b>{d.title}</b><small>{d.youPaid ? "You paid" : "Paid by a friend"} · {d.count} people</small></span>
+          <b className="sx-sum-amt">{money(d.total)}</b>
+        </div>
+        <button type="button" className="sx-cta" disabled={!ready} onClick={() => setView({ t: "detail", id: d.id })}>
+          {ready ? "View Details" : "Loading..."}
+        </button>
+        <button type="button" className="sx-ghost" onClick={() => setView({ t: "form", n: Date.now() })}>Add Another Expense</button>
+      </div>
     );
   }
 
-  const all = groupExpenses(entries);
-  const shown = all.filter((g) =>
-    filter === "me" ? g.paidByMe
-    : filter === "owe" ? !g.paidByMe && !g.settled
-    : filter === "settled" ? g.settled
-    : true
-  ).slice(0, 30);
+  if (view.t === "detail") {
+    const e = entries.find((x) => String(x.id) === String(view.id));
+    if (!e) { setView({ t: "hub" }); return null; }
+    return <Detail e={e} entries={entries} go={go} onBack={() => setView({ t: "hub" })} />;
+  }
 
+  if (view.t === "record" || view.t === "groups") {
+    return (
+      <div className="ms sx">
+        <div className="ms-bar">
+          <button type="button" className="ms-ib" onClick={() => setView({ t: "hub" })} aria-label="Back"><Ic n="back" /></button>
+          <h2>{view.t === "record" ? "Add Expense" : "Groups & Quick split"}</h2>
+          <span className="ms-ib ghost" />
+        </div>
+        {view.t === "record" ? paymentsHub : splitHub}
+      </div>
+    );
+  }
+
+  /* ---- Step 1: Split & Expense list ---- */
+  const groups = groupEntries(entries).filter((g) => {
+    if (pill === "Paid by me") return g.e.paid_by === "me";
+    if (pill === "To be paid") return g.members.some((m) => m.status !== "Settled");
+    if (pill === "Settled") return g.members.every((m) => m.status === "Settled");
+    return true;
+  });
   const days = [];
-  shown.forEach((g) => {
-    let d = days.find((x) => x.k === g.day);
-    if (!d) { d = { k: g.day, items: [] }; days.push(d); }
-    d.items.push(g);
+  groups.forEach((g) => {
+    const k = String(g.e.payment_date || g.e.created_at || "").slice(0, 10);
+    let d = days.find((x) => x.k === k);
+    if (!d) { d = { k, list: [] }; days.push(d); }
+    d.list.push(g);
   });
 
-  const chips = [["all", "All"], ["me", "Paid by me"], ["owe", "To be paid"], ["settled", "Settled"]];
-  const start = () => { setFormKey((k) => k + 1); setStep("form"); };
-
   return (
-    <div className="se">
+    <div className="ms sx">
       {header}
 
-      <div className="se-big">
-        <button type="button" className="se-big-a" onClick={start}>
-          <span className="se-big-ic"><Ic n="plus" s={26} /></span>
+      <div className="sx-cards">
+        <button type="button" className="sx-card hi" onClick={() => setView({ t: "form" })}>
+          <span className="sx-card-ic"><Ic n="plus" s={24} /></span>
           <span><b>Split Bill</b><small>Add a new expense</small></span>
         </button>
-        <button type="button" className="se-big-b" onClick={() => go("Payments")}>
-          <span className="se-big-ic2"><Ic n="receipt" s={30} /></span>
+        <button type="button" className="sx-card" onClick={() => setView({ t: "record" })}>
+          <span className="sx-card-ic"><Ic n="receipt" s={26} /></span>
           <span><b>Add Expense</b><small>Record payment</small></span>
         </button>
       </div>
 
-      <div className="se-chips" role="tablist">
-        {chips.map(([k, l]) => (
-          <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>
+      <div className="sx-pills">
+        {["All", "Paid by me", "To be paid", "Settled"].map((p) => (
+          <button key={p} type="button" className={pill === p ? "on" : ""} onClick={() => setPill(p)}>{p}</button>
         ))}
       </div>
 
-      {days.length === 0 ? (
-        <div className="se-empty">
-          <b>{filter === "all" ? "No expenses yet" : "Nothing here"}</b>
-          <p>{filter === "all" ? "Tap Split Bill to add your first shared expense." : "Expenses that match this filter will show up here."}</p>
-        </div>
-      ) : (
-        days.map((d) => (
-          <section key={d.k}>
-            <h4 className="se-day">{dayLabel(d.k)}</h4>
-            <div className="se-list">
-              {d.items.map((g) => (
-                <button type="button" className="se-item" key={g.id} onClick={() => go("Payments")}>
-                  <span className={"se-row-ic " + toneFor(g.icon)}><Ic n={g.icon} s={24} /></span>
-                  <span className="se-item-mid">
-                    <b>{g.title}</b>
-                    <small>{g.paidByMe ? "You paid" : `${g.payer} paid`} · {g.isSplit ? "Split" : "Payment"}{g.settled ? " · Settled" : ""}</small>
-                  </span>
-                  <span className="se-item-r">
-                    <b>{money(g.total)}</b>
-                    <span className="se-stack">
-                      {g.people.slice(0, 2).map((n) => <i key={n} style={{ background: hue(n) }}>{ini(n)}</i>)}
-                      {g.people.length > 2 && <i className="more">+{g.people.length - 2}</i>}
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
-        ))
-      )}
+      {days.length === 0 && <p className="sx-empty">{entries.length === 0 ? "No expenses yet. Tap Split Bill to add one." : "Nothing here."}</p>}
 
-      <button type="button" className="se-fab" onClick={start} aria-label="Split a new bill"><Ic n="plus" s={30} /></button>
+      {days.map((d) => (
+        <div key={d.k}>
+          <h3 className="sx-day">{dayLabel(d.k)}</h3>
+          {d.list.map((g) => {
+            const e = g.e;
+            const { cat, title } = parseNote(e.note, e.mode);
+            const info = splitInfo(e, entries);
+            const youPaid = e.paid_by === "me";
+            const names = youPaid ? ["You", ...g.members.map((m) => m.friend)] : [e.friend, "You"];
+            return (
+              <button type="button" className="sx-row" key={g.key} onClick={() => setView({ t: "detail", id: e.id })}>
+                <span className={"sx-ic c-" + cat}><Ic n={catIcon(cat)} s={24} /></span>
+                <span className="sx-mid">
+                  <b>{title}</b>
+                  <small>{youPaid ? "You paid" : `${e.friend} paid`} · {info.isSplit ? kindText(info.kind) : e.mode || "Payment"}</small>
+                </span>
+                <span className="sx-end">
+                  <b>{money(info.total)}</b>
+                  <Faces names={names} />
+                </span>
+                <span className="sx-dots"><Ic n="vdots" s={18} /></span>
+              </button>
+            );
+          })}
+        </div>
+      ))}
+
+      <button type="button" className="sx-link" onClick={() => setView({ t: "groups" })}>Groups &amp; Quick split →</button>
+
+      <button type="button" className="sx-fab" onClick={() => setView({ t: "form" })} aria-label="Split bill"><Ic n="plus" s={28} /></button>
     </div>
   );
 }
