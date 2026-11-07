@@ -17,10 +17,12 @@ import "./mobile-ui.css";
 import MobileHome from "./MobileHome";
 import MobileSplit from "./MobileSplit";
 import MobilePayments from "./MobilePayments";
-import MobileFriends from "./MobileFriends";
-import MobileAnalytics from "./MobileAnalytics";
 import DesktopHome from "./DesktopHome";
-import { MobileGroups, MobileProfile } from "./MobileScreens";
+import { MobileProfile } from "./MobileScreens";
+import { Wrap } from "./spkit";
+import FriendsScreen from "./FriendsScreen";
+import SettleScreen from "./SettleScreen";
+import AnalyticsScreen from "./AnalyticsScreen";
 import "./mobile-screens.css";
 import "./no-splash.css";
 import "./dk.css";
@@ -46,6 +48,7 @@ const TITLES = {
   Groups: ["Groups", "Friends and people you split with."],
   Expenses: ["Expenses", "Add and split expenses."],
   Settlements: ["Settlements", "Clear your dues in one tap."],
+  MerchantPay: ["Pay", "Scan a shop QR or pay someone."],
   Payments: ["Activity", "Record payments and see your history."],
   Analytics: ["Analytics", "See where your money goes."],
   Profile: ["Settings", "Your account and settings."],
@@ -369,6 +372,17 @@ function Shell({ session }) {
   const [error, setError] = useState("");
   const phone = useIsPhone();
   const { dark } = useTheme();
+  const [settleFor, setSettleFor] = useState(null);
+  useEffect(() => {
+    if (page !== "Settlements") setSettleFor(null);
+  }, [page]);
+  const openFrom = (screen, p) => {
+    if (screen === "settle") {
+      setSettleFor(p && p.friend ? p.friend : null);
+      setPage("Settlements");
+    } else if (screen === "analytics") setPage("Analytics");
+    else setPage("Groups");
+  };
 
   async function load() {
     const [e, f, c, p] = await Promise.all([
@@ -448,7 +462,7 @@ function Shell({ session }) {
             />
           )}
 
-          {page === "Settlements" && (
+          {(page === "Settlements" || page === "MerchantPay") && (
             <PayPage entries={entries} friends={friends} reload={load} setError={setError} />
           )}
 
@@ -475,7 +489,7 @@ function Shell({ session }) {
   );
 
   if (phone) {
-    /* Bottom bar: Home, Split & Expense, Groups, Payments, Profile */
+    /* Bottom bar: Home, Split, Groups, Details, Profile */
     const tabs = [
       ["Dashboard", "home", "Home"],
       ["Expenses", "grid", "Split & Expense"],
@@ -485,7 +499,7 @@ function Shell({ session }) {
     ];
     return (
       <div className="mb-app">
-        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && page !== "Payments" && page !== "Friends" && page !== "Analytics" && (
+        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && page !== "Payments" && page !== "Settlements" && page !== "Analytics" && (
         <header className="mb-top">
           <div className="mb-ttl">
             {home ? (
@@ -507,24 +521,24 @@ function Shell({ session }) {
           {home ? (
             <MobileHome entries={entries} go={setPage} friends={friends} />
           ) : page === "Groups" ? (
-            <MobileGroups
-              friends={friends}
-              entries={entries}
-              go={setPage}
-              reload={load}
-              setError={setError}
-              manage={
-                <Friends
-                  friends={friends}
-                  connections={connections}
-                  profiles={profiles}
-                  entries={entries}
-                  myId={myId}
-                  reload={load}
-                  setError={setError}
-                />
-              }
-            />
+            <Wrap dark={dark}>
+              <FriendsScreen
+                goto={openFrom}
+                onBack={() => setPage("Dashboard")}
+                sync={load}
+                manage={
+                  <Friends
+                    friends={friends}
+                    connections={connections}
+                    profiles={profiles}
+                    entries={entries}
+                    myId={myId}
+                    reload={load}
+                    setError={setError}
+                  />
+                }
+              />
+            </Wrap>
           ) : page === "Expenses" ? (
             <MobileSplit
               entries={entries}
@@ -544,7 +558,40 @@ function Shell({ session }) {
                   <ProfileMenu name={myName} go={setPage} />
                 </header>
               }
+              splitHub={
+                <SplitHub
+                  entries={entries}
+                  friends={friends}
+                  reload={load}
+                  setError={setError}
+                  goFriends={() => setPage("Groups")}
+                  myName={myName}
+                />
+              }
+              paymentsHub={
+                <PaymentsHub
+                  entries={entries}
+                  friends={friends}
+                  reload={load}
+                  setError={setError}
+                  goFriends={() => setPage("Groups")}
+                  myName={myName}
+                />
+              }
             />
+          ) : page === "Settlements" ? (
+            <Wrap dark={dark}>
+              <SettleScreen
+                goto={openFrom}
+                onBack={() => setPage("Dashboard")}
+                param={settleFor ? { friend: settleFor } : null}
+                sync={load}
+              />
+            </Wrap>
+          ) : page === "Analytics" ? (
+            <Wrap dark={dark}>
+              <AnalyticsScreen onBack={() => setPage("Profile")} />
+            </Wrap>
           ) : page === "Payments" ? (
             <MobilePayments
               entries={entries}
@@ -575,17 +622,6 @@ function Shell({ session }) {
                 />
               }
             />
-          ) : page === "Friends" ? (
-            <MobileFriends
-              entries={entries}
-              friends={friends}
-              go={setPage}
-              reload={load}
-              setError={setError}
-              myId={myId}
-            />
-          ) : page === "Analytics" ? (
-            <MobileAnalytics entries={entries} go={setPage} />
           ) : page === "Profile" ? (
             <MobileProfile
               session={session}
@@ -605,7 +641,7 @@ function Shell({ session }) {
 
         <nav className="mb-nav">
           {tabs.map(([key, icon, label]) => (
-            <button key={key} type="button" className={page === key || (key === "Dashboard" && (page === "Friends" || page === "Analytics")) ? "on" : ""} onClick={() => setPage(key)}>
+            <button key={key} type="button" className={(({ Settlements: "Payments", MerchantPay: "Payments", Analytics: "Profile" })[page] || page) === key ? "on" : ""} onClick={() => setPage(key)}>
               <Icon name={icon} size={22} />
               <span>{label}</span>
             </button>

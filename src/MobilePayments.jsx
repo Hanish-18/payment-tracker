@@ -395,7 +395,7 @@ export default function MobilePayments({ entries, friends, go, reload, setError,
     ["plus", "Add Payment", () => setView({ t: "add" }), true],
     ["send", "Pay Now", () => go("Settlements")],
     ["down", "Request", () => setView({ t: "all" })],
-    ["qr", "Scan UPI", () => go("Settlements")],
+    ["qr", "Scan UPI", () => go("MerchantPay")],
   ];
 
   return (
