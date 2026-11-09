@@ -1,10 +1,28 @@
 /* Phone "Split & Expense" flow (matches the mockup):
    1) Split & Expense list   2) Split an Expense form   3) Expense Created!  (+ Payment Details)  */
-import { useState } from "react";
+import React, { useState } from "react";
 import "./mobile-split.css";
 import { supabase } from "./supabaseClient";
 import { hue, ini } from "./DesktopHome";
 import { Detail, Ic, parseNote, catIcon, money, splitInfo } from "./MobilePayments";
+import PaymentsHub from "./PaymentsHub";
+import SplitHub from "./SplitHub";
+
+/* Shows the error on screen instead of a blank page */
+class Boundary extends React.Component {
+  constructor(p) { super(p); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  render() {
+    if (this.state.err) {
+      return (
+        <p className="sx-err" style={{ margin: 16 }}>
+          Something went wrong: {String(this.state.err.message || this.state.err)}
+        </p>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const r2 = (n) => Math.round(Number(n) * 100) / 100;
 const localDay = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -280,6 +298,15 @@ export default function MobileSplit({ entries, friends, go, reload, setError, my
   }
 
   if (view.t === "record" || view.t === "groups") {
+    const hubProps = {
+      entries, friends, reload, setError,
+      goFriends: () => go("Groups"),
+      myName,
+    };
+    /* If App.jsx does not pass the hub, open the existing one directly (this fixes the blank page) */
+    const body = view.t === "record"
+      ? (paymentsHub || <PaymentsHub {...hubProps} />)
+      : (splitHub || <SplitHub {...hubProps} />);
     return (
       <div className="ms sx">
         <div className="ms-bar">
@@ -287,7 +314,7 @@ export default function MobileSplit({ entries, friends, go, reload, setError, my
           <h2>{view.t === "record" ? "Add Expense" : "Groups & Quick split"}</h2>
           <span className="ms-ib ghost" />
         </div>
-        {view.t === "record" ? paymentsHub : splitHub}
+        <Boundary>{body}</Boundary>
       </div>
     );
   }
