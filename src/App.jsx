@@ -22,7 +22,7 @@ import MobilePayments from "./MobilePayments";
 import MobileAnalytics from "./MobileAnalytics";
 import MobileUdhaar from "./MobileUdhaar";
 import DesktopHome from "./DesktopHome";
-import { MobileGroups, MobileProfile } from "./MobileScreens";
+
 import "./mobile-screens.css";
 import "./no-splash.css";
 import "./dk.css";
