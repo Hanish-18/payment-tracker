@@ -5,7 +5,7 @@ import "./mobile-split.css";
 import { supabase } from "./supabaseClient";
 import { hue, ini } from "./DesktopHome";
 import { Detail, Ic, parseNote, catIcon, money, splitInfo } from "./MobilePayments";
-import PaymentsHub from "./PaymentsHub";
+import MobileUdhaar from "./MobileUdhaar";
 import SplitHub from "./SplitHub";
 
 /* Shows the error on screen instead of a blank page */
@@ -233,7 +233,7 @@ function SplitForm({ friends, myName, myId, onBack, onDone, setError, go }) {
 }
 
 /* ============================ Main ============================ */
-export default function MobileSplit({ entries, friends, go, reload, setError, myId, myName, header, splitHub, paymentsHub }) {
+export default function MobileSplit({ entries, friends, go, reload, setError, myId, myName, header, splitHub, paymentsHub, udhaar }) {
   const [view, setView] = useState({ t: "hub" });
   const [pill, setPill] = useState("All");
 
@@ -297,24 +297,34 @@ export default function MobileSplit({ entries, friends, go, reload, setError, my
     return <Detail e={e} entries={entries} go={go} onBack={() => setView({ t: "hub" })} />;
   }
 
-  if (view.t === "record" || view.t === "groups") {
-    const hubProps = {
-      entries, friends, reload, setError,
-      goFriends: () => go("Groups"),
-      myName,
-    };
-    /* If App.jsx does not pass the hub, open the existing one directly (this fixes the blank page) */
-    const body = view.t === "record"
-      ? (paymentsHub || <PaymentsHub {...hubProps} />)
-      : (splitHub || <SplitHub {...hubProps} />);
+  if (view.t === "record") {
+    /* Same Add Expense (Udhaar) screen that the Home button opens */
+    const udhaarList = udhaar || entries.filter((e) => e.verification && e.verification !== "verified");
+    return (
+      <Boundary>
+        <MobileUdhaar
+          friends={friends}
+          udhaar={udhaarList}
+          myId={myId}
+          reload={reload}
+          setError={setError}
+          go={go}
+          onClose={() => setView({ t: "hub" })}
+        />
+      </Boundary>
+    );
+  }
+
+  if (view.t === "groups") {
+    const hubProps = { entries, friends, reload, setError, goFriends: () => go("Groups"), myName };
     return (
       <div className="ms sx">
         <div className="ms-bar">
           <button type="button" className="ms-ib" onClick={() => setView({ t: "hub" })} aria-label="Back"><Ic n="back" /></button>
-          <h2>{view.t === "record" ? "Add Expense" : "Groups & Quick split"}</h2>
+          <h2>Groups &amp; Quick split</h2>
           <span className="ms-ib ghost" />
         </div>
-        <Boundary>{body}</Boundary>
+        <Boundary>{splitHub || <SplitHub {...hubProps} />}</Boundary>
       </div>
     );
   }
