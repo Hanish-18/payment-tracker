@@ -2,6 +2,7 @@
    1) Split & Expense list   2) Split an Expense form   3) Expense Created!  (+ Payment Details)  */
 import React, { useState } from "react";
 import "./mobile-split.css";
+import "./mobile-split2.css";
 import { supabase } from "./supabaseClient";
 import { hue, ini } from "./DesktopHome";
 import { Detail, Ic, parseNote, catIcon, money, splitInfo } from "./MobilePayments";
@@ -67,12 +68,12 @@ function Faces({ names }) {
 }
 
 /* ============================ Step 2: Split an Expense ============================ */
-function SplitForm({ friends, myName, myId, onBack, onDone, setError, go }) {
+function SplitForm({ friends, myName, myId, onBack, onDone, setError, go, initialKind }) {
   const [amount, setAmount] = useState("");
   const [title, setTitle] = useState("");
   const [payer, setPayer] = useState("me");
   const [sel, setSel] = useState([]);
-  const [kind, setKind] = useState("equal");
+  const [kind, setKind] = useState(initialKind || "equal");
   const [vals, setVals] = useState({});
   const [hint, setHint] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -235,12 +236,13 @@ function SplitForm({ friends, myName, myId, onBack, onDone, setError, go }) {
 /* ============================ Main ============================ */
 export default function MobileSplit({ entries, friends, go, reload, setError, myId, myName, header, splitHub, paymentsHub, udhaar }) {
   const [view, setView] = useState({ t: "hub" });
-  const [pill, setPill] = useState("All");
+  const [showAll, setShowAll] = useState(false);
 
   if (view.t === "form") {
     return (
       <SplitForm
         key={view.n || 0}
+        initialKind={view.kind}
         friends={friends}
         myName={myName}
         myId={myId}
@@ -329,74 +331,63 @@ export default function MobileSplit({ entries, friends, go, reload, setError, my
     );
   }
 
-  /* ---- Step 1: Split & Expense list ---- */
-  const groups = groupEntries(entries).filter((g) => {
-    if (pill === "Paid by me") return g.e.paid_by === "me";
-    if (pill === "To be paid") return g.members.some((m) => m.status !== "Settled");
-    if (pill === "Settled") return g.members.every((m) => m.status === "Settled");
-    return true;
-  });
-  const days = [];
-  groups.forEach((g) => {
-    const k = String(g.e.payment_date || g.e.created_at || "").slice(0, 10);
-    let d = days.find((x) => x.k === k);
-    if (!d) { d = { k, list: [] }; days.push(d); }
-    d.list.push(g);
-  });
+  /* ---- Step 1: Split Expenses hub ---- */
+  const onlySplits = groupEntries(entries.filter((e) => /split:/i.test(String(e.note || ""))));
+  const list = onlySplits.length ? onlySplits : groupEntries(entries);
+  const shown = showAll ? list : list.slice(0, 4);
 
   return (
-    <div className="ms sx">
-      {header}
+    <div className="ms sx sx2">
+      <h1 className="sx2-h">Split Expenses</h1>
+      <p className="sx2-sub">Share a bill or expense with friends.</p>
 
-      <div className="sx-cards">
-        <button type="button" className="sx-card hi" onClick={() => setView({ t: "form" })}>
-          <span className="sx-card-ic"><Ic n="plus" s={24} /></span>
-          <span><b>Split Bill</b><small>Add a new expense</small></span>
+      <button type="button" className="sx2-big" onClick={() => setView({ t: "form" })}>
+        <Ic n="receipt" s={30} /> Split a Bill
+      </button>
+
+      <div className="sx2-tiles">
+        <button type="button" onClick={() => setView({ t: "record" })}>
+          <span className="sx2-tic"><Ic n="plus" s={26} /></span>
+          <b>Add Expense</b>
+          <small>Record payment</small>
         </button>
-        <button type="button" className="sx-card" onClick={() => setView({ t: "record" })}>
-          <span className="sx-card-ic"><Ic n="receipt" s={26} /></span>
-          <span><b>Add Expense</b><small>Record payment</small></span>
+        <button type="button" onClick={() => setView({ t: "form", kind: "custom", n: Date.now() })}>
+          <span className="sx2-tic purple"><Ic n="receipt" s={26} /></span>
+          <b>Manual Split</b>
+          <small>Add amount &amp; people</small>
         </button>
       </div>
 
-      <div className="sx-pills">
-        {["All", "Paid by me", "To be paid", "Settled"].map((p) => (
-          <button key={p} type="button" className={pill === p ? "on" : ""} onClick={() => setPill(p)}>{p}</button>
-        ))}
+      <div className="sx2-head">
+        <h2>Recent Splits</h2>
+        {list.length > 4 && (
+          <button type="button" onClick={() => setShowAll(!showAll)}>{showAll ? "Show less" : "See All →"}</button>
+        )}
       </div>
 
-      {days.length === 0 && <p className="sx-empty">{entries.length === 0 ? "No expenses yet. Tap Split Bill to add one." : "Nothing here."}</p>}
+      {list.length === 0 && <p className="sx-empty">No splits yet. Tap Split a Bill to add one.</p>}
 
-      {days.map((d) => (
-        <div key={d.k}>
-          <h3 className="sx-day">{dayLabel(d.k)}</h3>
-          {d.list.map((g) => {
-            const e = g.e;
-            const { cat, title } = parseNote(e.note, e.mode);
-            const info = splitInfo(e, entries);
-            const youPaid = e.paid_by === "me";
-            const names = youPaid ? ["You", ...g.members.map((m) => m.friend)] : [e.friend, "You"];
-            return (
-              <button type="button" className="sx-row" key={g.key} onClick={() => setView({ t: "detail", id: e.id })}>
-                <span className={"sx-ic c-" + cat}><Ic n={catIcon(cat)} s={24} /></span>
-                <span className="sx-mid">
-                  <b>{title}</b>
-                  <small>{youPaid ? "You paid" : `${e.friend} paid`} · {info.isSplit ? kindText(info.kind) : e.mode || "Payment"}</small>
-                </span>
-                <span className="sx-end">
-                  <b>{money(info.total)}</b>
-                  <Faces names={names} />
-                </span>
-                <span className="sx-dots"><Ic n="vdots" s={18} /></span>
-              </button>
-            );
-          })}
-        </div>
-      ))}
+      <div className="sx2-list">
+        {shown.map((g) => {
+          const e = g.e;
+          const { cat, title } = parseNote(e.note, e.mode);
+          const info = splitInfo(e, entries);
+          const m = String(e.note || "").match(/\((\d+) people/);
+          const people = m ? Number(m[1]) : g.members.length + 1;
+          return (
+            <button type="button" className="sx2-row" key={g.key} onClick={() => setView({ t: "detail", id: e.id })}>
+              <span className={"sx-ic c-" + cat}><Ic n={catIcon(cat)} s={24} /></span>
+              <span className="sx-mid">
+                <b>{title}</b>
+                <small>{money(info.total)} · {people} people</small>
+              </span>
+              <span className="sx2-chev">›</span>
+            </button>
+          );
+        })}
+      </div>
 
-      <button type="button" className="sx-link" onClick={() => setView({ t: "groups" })}>Groups &amp; Quick split →</button>
-
-      <button type="button" className="sx-fab" onClick={() => setView({ t: "form" })} aria-label="Split bill"><Ic n="plus" s={28} /></button>
+      <button type="button" className="sx-link" onClick={() => setView({ t: "groups" })}>Quick split (old) →</button>
     </div>
   );
 }

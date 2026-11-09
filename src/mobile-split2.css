@@ -1,0 +1,18 @@
+/* Split Expenses hub (matches the mockup) */
+.sx2-h { margin: 4px 0 0; font-family: inherit; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; color: var(--ink, #0f1f4a); }
+.sx2-sub { margin: 6px 0 18px; font-size: 16px; color: var(--mut, #5b6b8f); }
+.sx2-big { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 88px; border: 0; border-radius: 26px; background: linear-gradient(135deg, #1d62f0, #0f4be0); color: #fff; font-family: inherit; font-size: 24px; font-weight: 700; cursor: pointer; box-shadow: 0 16px 32px rgba(29, 98, 240, 0.4); }
+.sx2-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0 6px; }
+.sx2-tiles button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 18px 10px 16px; border: 1px solid var(--cardline, #e9eefb); border-radius: 22px; background: var(--card, #fff); color: var(--ink, #0f1f4a); font-family: inherit; cursor: pointer; box-shadow: var(--shadow, 0 6px 20px rgba(20, 60, 160, 0.08)); }
+.sx2-tiles b { margin-top: 6px; font-size: 17px; font-weight: 800; }
+.sx2-tiles small { font-size: 13px; color: var(--mut, #5b6b8f); }
+.sx2-tic { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #e3ecff; color: #1d62f0; }
+.sx2-tic.purple { background: #efe6ff; color: #6a3fd8; }
+.sx2-head { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 10px; }
+.sx2-head h2 { margin: 0; font-family: inherit; font-size: 20px; font-weight: 800; color: var(--ink, #0f1f4a); }
+.sx2-head button { border: 0; background: transparent; box-shadow: none; padding: 0; color: var(--pri, #1d62f0); font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.sx2-list { border-radius: 22px; background: var(--card, #fff); border: 1px solid var(--cardline, #e9eefb); box-shadow: var(--shadow, none); overflow: hidden; }
+.sx2-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; text-align: left; border: 0; border-bottom: 1px solid var(--line, #edf1fa); background: transparent; box-shadow: none; color: var(--ink, #0f1f4a); font-family: inherit; cursor: pointer; }
+.sx2-row:last-child { border-bottom: 0; }
+.sx2-row .sx-mid { flex: 1; min-width: 0; }
+.sx2-chev { font-size: 26px; line-height: 1; color: var(--mut, #5b6b8f); }

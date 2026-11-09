@@ -1,0 +1,63 @@
+/* My Groups (matches the mockup) */
+.gv { color: var(--ink, #0f1f4a); padding-bottom: 12px; }
+.gv button, .gv input { font-family: inherit; }
+.gv-h { margin: 4px 0 0; font-family: inherit; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; color: var(--ink, #0f1f4a); }
+.gv-sub { margin: 6px 0 16px; font-size: 15.5px; color: var(--mut, #5b6b8f); }
+.gv-big { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 68px; margin: 0 0 16px; border: 0; border-radius: 22px; background: linear-gradient(135deg, #1d62f0, #0f4be0); color: #fff; font-size: 21px; font-weight: 700; cursor: pointer; box-shadow: 0 14px 28px rgba(29, 98, 240, 0.38); }
+.gv-pills { display: flex; gap: 10px; margin-bottom: 16px; }
+.gv-pills button { flex: 1; height: 42px; border: 1px solid var(--cardline, #e1e9fb); border-radius: 999px; background: var(--card, #fff); color: var(--ink, #0f1f4a); font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: none; }
+.gv-pills button.on { border-color: transparent; background: linear-gradient(135deg, #1d62f0, #0f4be0); color: #fff; font-weight: 700; box-shadow: 0 8px 18px rgba(29, 98, 240, 0.3); }
+.gv-list { border-radius: 22px; background: var(--card, #fff); border: 1px solid var(--cardline, #e9eefb); box-shadow: var(--shadow, none); overflow: hidden; }
+.gv-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; text-align: left; border: 0; border-bottom: 1px solid var(--line, #edf1fa); background: transparent; box-shadow: none; color: var(--ink, #0f1f4a); cursor: pointer; }
+.gv-row:last-child { border-bottom: 0; }
+.gv-emoji { width: 56px; height: 56px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: 28px; background: linear-gradient(135deg, #e3ecff, #cfe0ff); }
+.gv-emoji.big { width: 84px; height: 84px; font-size: 42px; margin: 0 auto 10px; }
+.gv-mid { flex: 1; min-width: 0; }
+.gv-mid b { display: block; font-size: 18px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gv-mid small { display: block; margin-top: 3px; font-size: 14px; color: var(--mut, #5b6b8f); }
+.gv-chev { font-size: 28px; line-height: 1; color: var(--ink, #0f1f4a); }
+.gv-empty { padding: 26px 0; text-align: center; color: var(--mut, #5b6b8f); font-size: 15px; }
+
+.gv-bar { position: relative; display: flex; justify-content: space-between; margin-bottom: 10px; }
+.gv-ib { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 0; padding: 0; background: var(--card, #fff); color: var(--ink, #0f1f4a); box-shadow: 0 4px 14px rgba(20, 60, 160, 0.14); cursor: pointer; }
+.gv-menu { position: absolute; top: 50px; right: 0; z-index: 5; padding: 6px; border-radius: 14px; background: var(--card, #fff); box-shadow: 0 12px 30px rgba(10, 25, 70, 0.25); display: flex; flex-direction: column; }
+.gv-menu button { border: 0; background: transparent; box-shadow: none; padding: 10px 14px; text-align: left; font-size: 14.5px; font-weight: 700; color: var(--ink, #0f1f4a); cursor: pointer; }
+.gv-menu .red { color: #e11d48; }
+.gv-top { text-align: center; margin-bottom: 8px; }
+.gv-top .gv-sub { margin: 4px 0 8px; }
+.gv-head h2 { margin: 14px 0 10px; font-family: inherit; font-size: 20px; font-weight: 800; color: var(--ink, #0f1f4a); }
+.gv-addfriend { display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 12px; padding: 12px 14px; border: 1.5px dashed #2f6fed; border-radius: 18px; background: transparent; color: #1d62f0; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: none; }
+.gv-addfriend span { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #e3ecff; }
+.gv-mem { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line, #edf1fa); }
+.gv-mem:last-child { border-bottom: 0; }
+.gv-mem b { flex: 1; font-size: 16px; font-weight: 700; }
+.gv-mem small { font-size: 13px; color: var(--mut, #5b6b8f); font-weight: 600; }
+.gv-mem small.get { color: #16a34a; }
+.gv-mem small.owe { color: #e11d48; }
+.gv-x { width: 30px; height: 30px; border: 0; border-radius: 50%; display: grid; place-items: center; background: var(--tile, #eef3ff); color: var(--mut, #5b6b8f); cursor: pointer; padding: 0; box-shadow: none; }
+.gv-dot { display: grid; place-items: center; border-radius: 50%; color: #fff; font-style: normal; font-weight: 800; flex: 0 0 auto; }
+.gv-card { padding: 18px; border-radius: 20px; background: var(--card, #fff); border: 1px solid var(--cardline, #e9eefb); }
+.gv-warn p { margin: 8px 0; font-size: 14.5px; line-height: 1.5; color: var(--mut, #5b6b8f); }
+.gv-warn small { color: #e11d48; word-break: break-word; }
+.gv-err { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(225, 29, 72, 0.1); color: #d11a2a; font-size: 14px; }
+
+.gv-bg { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; background: rgba(8, 20, 60, 0.45); }
+.gv-sheet { width: 100%; max-height: 86vh; overflow-y: auto; padding: 20px 18px calc(24px + env(safe-area-inset-bottom)); border-radius: 26px 26px 0 0; background: var(--card, #fff); }
+.gv-sheet h3 { margin: 0 0 8px; font-family: inherit; font-size: 22px; font-weight: 800; color: var(--ink, #0f1f4a); }
+.gv-lbl { display: block; margin: 14px 0 8px; font-size: 14px; font-weight: 800; color: var(--ink, #0f1f4a); }
+.gv-in, .gv-new input { width: 100%; height: 50px; padding: 0 16px; border: 1px solid var(--inputline, #dde5f6); border-radius: 14px; background: var(--tile, #eef3ff); color: var(--ink, #0f1f4a); font-size: 16px; outline: none; margin: 0; }
+.gv-emojis { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.gv-emojis button { aspect-ratio: 1; border: 2px solid transparent; border-radius: 12px; background: var(--tile, #eef3ff); font-size: 20px; cursor: pointer; padding: 0; box-shadow: none; }
+.gv-emojis button.on { border-color: #2f6fed; background: #e3ecff; }
+.gv-pickrow { display: flex; flex-wrap: wrap; gap: 12px; }
+.gv-pickrow button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 64px; border: 0; background: transparent; color: var(--ink, #0f1f4a); font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 0; box-shadow: none; }
+.gv-pickrow button.on .gv-dot { outline: 3px solid #2f6fed; }
+.gv-tick { position: absolute; top: -2px; right: 6px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: #2f6fed; color: #fff; font-style: normal; }
+.gv-new { display: flex; gap: 10px; }
+.gv-new button { flex: 0 0 auto; padding: 0 20px; border: 0; border-radius: 14px; background: #12327f; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: none; }
+.gv-new button:disabled { opacity: 0.5; }
+.gv-hint { display: block; margin-top: 10px; font-size: 12.5px; line-height: 1.45; color: var(--mut, #5b6b8f); }
+.gv-done { display: block; width: 100%; height: 54px; margin-top: 18px; border: 0; border-radius: 999px; background: #12327f; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 22px rgba(18, 50, 127, 0.3); }
+.gv-done:disabled { opacity: 0.6; }
+
+.gv-friendslink { display: block; margin: 0 0 14px; padding: 0; border: 0; background: transparent; box-shadow: none; color: var(--pri, #1d62f0); font-size: 14px; font-weight: 700; cursor: pointer; text-align: left; }
