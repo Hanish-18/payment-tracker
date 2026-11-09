@@ -5,6 +5,7 @@ import { useState } from "react";
 import "./mobile-friends-analytics.css";
 import { supabase } from "./supabaseClient";
 import { hue, ini } from "./DesktopHome";
+import MobileUdhaar from "./MobileUdhaar";
 
 const money = (n) => "₹" + Math.abs(Number(n)).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 const sum = (l) => l.reduce((s, e) => s + Number(e.amount), 0);
@@ -81,162 +82,8 @@ async function shareText(text) {
   } catch (e) { /* cancelled */ }
 }
 
-/* ============================ Add expense for a friend (steps 4 to 7) ============================ */
-function AddFlow({ f, myId, reload, setError, onClose }) {
-  const first = f.name.split(" ")[0];
-  const [step, setStep] = useState(1);
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(todayStr());
-  const [payer, setPayer] = useState("me");
-  const [method, setMethod] = useState("UPI");
-  const [remind, setRemind] = useState(true);
-  const [due, setDue] = useState(plusDays(7));
-  const [chan, setChan] = useState("wa");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [done, setDone] = useState(null);
-
-  const back = () => (step === 1 || step === 4 ? onClose() : setStep((s) => s - 1));
-
-  function next1() {
-    setMsg("");
-    if (!title.trim()) { setMsg("Enter what the expense was for."); return; }
-    if (!(Number(amount) > 0)) { setMsg("Enter the amount."); return; }
-    setStep(2);
-  }
-  function next2() { if (payer === "friend") save(); else setStep(3); }
-
-  async function save() {
-    setMsg("");
-    const amt = Number(amount);
-    const withDue = payer === "me" && remind;
-    const row = { user_id: myId, friend: f.name, paid_by: payer, amount: amt, note: title.trim(), payment_date: date, status: "Pending" };
-    if (withDue) row.due_date = due;
-    const modes = [...new Set([method, "Other", "UPI", "Cash"])];
-    setBusy(true);
-    let last = null;
-    let ok = false;
-    for (const mode of modes) {
-      const { error } = await supabase.from("entries").insert({ ...row, mode });
-      if (!error) { ok = true; break; }
-      last = error;
-      if (!/mode|check/i.test(error.message)) break;
-    }
-    setBusy(false);
-    if (!ok) { setError(last.message); setMsg(last.message); return; }
-    setError("");
-    reload();
-    setDone({ title: title.trim(), amt, payer, method, date, due: withDue ? due : null, chan });
-    setStep(4);
-  }
-
-  function sendReminder() {
-    const text = `Hi ${first}, a quick reminder: you owe me ${money(done.amt)} for "${done.title}". Please pay by ${fdateY(done.due)}. Thanks!`;
-    if (done.chan === "wa") window.open(waLink(f.phone, text), "_blank");
-    else shareText(text);
-  }
-
-  const methods = [["UPI", "UPI Payment"], ["Card", "Card Payment"], ["Cash", "Cash Payment"]];
-
-  return (
-    <div className="fr fr-pad">
-      <div className="fr-bar">
-        <button type="button" className="fr-ib" onClick={back} aria-label="Back"><Ic n="back" /></button>
-        <h2>{step === 1 ? "Add Expense" : step === 2 ? "Payment Method" : step === 3 ? "Set Reminder" : ""}</h2>
-        <span className="fr-ib ghost" />
-      </div>
-
-      {step === 1 && (
-        <>
-          <div className="fr-for"><Avatar name={f.name} size={46} /><span><small>Adding expense for</small><b>{f.name}</b></span></div>
-          <label className="fr-lbl">Paid by</label>
-          <div className="fr-seg">
-            <button type="button" className={payer === "me" ? "on" : ""} onClick={() => setPayer("me")}>You</button>
-            <button type="button" className={payer === "friend" ? "on" : ""} onClick={() => setPayer("friend")}>{first}</button>
-          </div>
-          <label className="fr-lbl">Expense Title</label>
-          <div className="fr-field"><Ic n="cart" s={20} /><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Dinner at Cafe" /></div>
-          <label className="fr-lbl">Amount (₹)</label>
-          <div className="fr-field"><b>₹</b><input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="600" inputMode="decimal" /></div>
-          <label className="fr-lbl">Date</label>
-          <div className="fr-field"><Ic n="cal" s={20} /><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-          {msg && <p className="fr-err" role="alert">{msg}</p>}
-          <button type="button" className="fr-cta" onClick={next1}>Next <Ic n="send" s={18} /></button>
-        </>
-      )}
-
-      {step === 2 && (
-        <>
-          <p className="fr-q">How did you pay for this expense?</p>
-          <div className="fr-methods">
-            {methods.map(([k, l]) => (
-              <button key={k} type="button" className={method === k ? "on" : ""} onClick={() => setMethod(k)} aria-pressed={method === k}>
-                <span className="fr-m-ic">{k === "UPI" ? <i>UPI</i> : <Ic n={k === "Card" ? "card" : "cash"} s={24} />}</span>
-                <b>{l}</b>
-                {method === k && <span className="fr-tick"><Ic n="check" s={16} /></span>}
-              </button>
-            ))}
-          </div>
-          {msg && <p className="fr-err" role="alert">{msg}</p>}
-          <button type="button" className="fr-cta" onClick={next2} disabled={busy}>{busy ? "Saving..." : payer === "friend" ? "Add Expense" : "Continue"} <Ic n="send" s={18} /></button>
-        </>
-      )}
-
-      {step === 3 && (
-        <>
-          <div className="fr-bellbig"><Ic n="bell" s={44} /></div>
-          <h3 className="fr-remind">Remind {f.name} to pay you</h3>
-          <div className="fr-row fr-card">
-            <b>Add Reminder</b>
-            <button type="button" className={"fr-sw" + (remind ? " on" : "")} role="switch" aria-checked={remind} aria-label="Add reminder" onClick={() => setRemind(!remind)}><i /></button>
-          </div>
-          {remind && (
-            <>
-              <label className="fr-lbl">Due Date</label>
-              <div className="fr-field"><Ic n="cal" s={20} /><input type="date" value={due} min={todayStr()} onChange={(e) => setDue(e.target.value)} /></div>
-              <label className="fr-lbl">Reminder Channel</label>
-              <div className="fr-card fr-chan">
-                <button type="button" onClick={() => setChan("wa")} aria-pressed={chan === "wa"}>
-                  <span className="wa"><Ic n="chat" s={20} /></span><b>WhatsApp</b><i className={chan === "wa" ? "on" : ""} />
-                </button>
-                <button type="button" onClick={() => setChan("other")} aria-pressed={chan === "other"}>
-                  <span className="ot"><Ic n="send" s={20} /></span><b>Other App</b><i className={chan === "other" ? "on" : ""} />
-                </button>
-              </div>
-            </>
-          )}
-          {msg && <p className="fr-err" role="alert">{msg}</p>}
-          <button type="button" className="fr-cta" onClick={save} disabled={busy}>{busy ? "Saving..." : "Add Expense"}</button>
-        </>
-      )}
-
-      {step === 4 && done && (
-        <>
-          <div className="fr-ok" aria-hidden="true"><span><Ic n="check" s={44} /></span></div>
-          <h1 className="fr-done-h">Expense Added!</h1>
-          <p className="fr-done-p">{money(done.amt)} has been added for {f.name}.</p>
-          <div className="fr-card fr-sumcard">
-            <div className="fr-row"><b>{done.title}</b><b>{money(done.amt)}</b></div>
-            <p>Paid by: {done.payer === "me" ? "You" : first}</p>
-            <p>Payment Method: {done.method}</p>
-            <p>Date: {fdateY(done.date)}</p>
-            {done.due && <p>Reminder: {fdateY(done.due)}</p>}
-          </div>
-          {done.due && (
-            <button type="button" className="fr-wa" onClick={sendReminder}>
-              <Ic n="chat" s={20} /> {done.chan === "wa" ? "Send Reminder on WhatsApp" : "Share Reminder"} <Ic n="open" s={16} />
-            </button>
-          )}
-          <button type="button" className="fr-ghost" onClick={() => { setStep(1); setTitle(""); setAmount(""); setDone(null); }}>Add Another Expense</button>
-        </>
-      )}
-    </div>
-  );
-}
-
 /* ============================ Friend detail ============================ */
-function Detail({ f, entries, onBack, go, reload, setError, myId }) {
+function Detail({ f, entries, friends, udhaar, onBack, go, reload, setError, myId }) {
   const first = f.name.split(" ")[0];
   const [tab, setTab] = useState("history");
   const [view, setView] = useState("main");
@@ -245,7 +92,18 @@ function Detail({ f, entries, onBack, go, reload, setError, myId }) {
   const [msg, setMsg] = useState("");
 
   if (view === "add") {
-    return <AddFlow f={f} myId={myId} reload={reload} setError={setError} onClose={() => setView("main")} />;
+    return (
+      <MobileUdhaar
+        friends={friends}
+        udhaar={udhaar}
+        myId={myId}
+        reload={reload}
+        setError={setError}
+        go={go}
+        presetFriendId={f.id}
+        onClose={() => setView("main")}
+      />
+    );
   }
 
   const list = entries.filter((e) => e.friend === f.name);
@@ -364,14 +222,14 @@ function Detail({ f, entries, onBack, go, reload, setError, myId }) {
 }
 
 /* ============================ Friends list ============================ */
-export default function MobileFriends({ entries, friends, go, reload, setError, myId }) {
+export default function MobileFriends({ entries, friends, udhaar = [], go, reload, setError, myId }) {
   const [selId, setSelId] = useState(null);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState("all");
 
   const sel = friends.find((x) => x.id === selId);
   if (sel) {
-    return <Detail f={sel} entries={entries} go={go} reload={reload} setError={setError} myId={myId} onBack={() => setSelId(null)} />;
+    return <Detail f={sel} entries={entries} friends={friends} udhaar={udhaar} go={go} reload={reload} setError={setError} myId={myId} onBack={() => setSelId(null)} />;
   }
 
   const rows = friends

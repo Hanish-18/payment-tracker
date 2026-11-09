@@ -1,4 +1,4 @@
-/* Phone home screen (matches the mockup): hero, Total Balance, Add Expense, quick actions, friends, recent activity */
+/* Phone home screen (matches the mockup): hero, Total Balance, Add Expense, quick actions, groups, recent activity */
 import "./mobile-home-v2.css";
 import { Cover, kindFor } from "./DesktopHome";
 
@@ -78,7 +78,7 @@ export default function MobileHome({ entries, go, friends = [] }) {
         <Wallet />
       </div>
 
-      {/* Total Balance card */}
+      {/* Total Balance card: unchanged */}
       <button type="button" className="mh-bal" onClick={() => go("Settlements")}>
         <svg className="mh-wave" viewBox="0 0 200 80" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0 80V58c25-6 40-26 65-24s38 18 60 8 40-30 75-34v72z" />
@@ -92,7 +92,7 @@ export default function MobileHome({ entries, go, friends = [] }) {
       </button>
 
       {/* Add Expense */}
-      <button type="button" className="mh-add" onClick={() => go("Expenses")}>
+      <button type="button" className="mh-add" onClick={() => go("Udhaar")}>
         <Ic name="plus" size={24} />
         <span>Add Expense</span>
       </button>
@@ -107,16 +107,16 @@ export default function MobileHome({ entries, go, friends = [] }) {
         ))}
       </div>
 
-      {/* Your Friends */}
+      {/* Your Groups */}
       <div className="mh-head">
-        <h2>Your Friends</h2>
-        <button type="button" onClick={() => go("Friends")}>See All →</button>
+        <h2>Your Groups</h2>
+        <button type="button" onClick={() => go("Groups")}>See All →</button>
       </div>
       <div className="mh-groups">
         {friends.slice(0, 6).map((f, i) => {
           const count = entries.filter((e) => e.friend === f.name).length;
           return (
-            <button type="button" className="mh-gc" key={f.id} onClick={() => go("Friends")}>
+            <button type="button" className="mh-gc" key={f.id} onClick={() => go("Groups")}>
               <span className="mh-gc-cover"><Cover kind={kindFor(f.name, i)} uid={"h" + f.id} /></span>
               <b>{f.name}</b>
               <small>{count} expense{count === 1 ? "" : "s"}</small>

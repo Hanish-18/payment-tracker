@@ -17,12 +17,11 @@ import "./mobile-ui.css";
 import MobileHome from "./MobileHome";
 import MobileSplit from "./MobileSplit";
 import MobilePayments from "./MobilePayments";
+import MobileFriends from "./MobileFriends";
+import MobileAnalytics from "./MobileAnalytics";
+import MobileUdhaar from "./MobileUdhaar";
 import DesktopHome from "./DesktopHome";
-import { MobileProfile } from "./MobileScreens";
-import { Wrap } from "./spkit";
-import FriendsScreen from "./FriendsScreen";
-import SettleScreen from "./SettleScreen";
-import AnalyticsScreen from "./AnalyticsScreen";
+import { MobileGroups, MobileProfile } from "./MobileScreens";
 import "./mobile-screens.css";
 import "./no-splash.css";
 import "./dk.css";
@@ -48,7 +47,6 @@ const TITLES = {
   Groups: ["Groups", "Friends and people you split with."],
   Expenses: ["Expenses", "Add and split expenses."],
   Settlements: ["Settlements", "Clear your dues in one tap."],
-  MerchantPay: ["Pay", "Scan a shop QR or pay someone."],
   Payments: ["Activity", "Record payments and see your history."],
   Analytics: ["Analytics", "See where your money goes."],
   Profile: ["Settings", "Your account and settings."],
@@ -283,11 +281,11 @@ function TopSearch({ entries, friends, go }) {
   );
 }
 
-function Bell({ requests, owes, go }) {
+function Bell({ requests, owes, go, verify = 0 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useOutside(ref, () => setOpen(false));
-  const has = requests > 0 || owes.length > 0;
+  const has = requests > 0 || owes.length > 0 || verify > 0;
   function pick(page) {
     setOpen(false);
     go(page);
@@ -301,6 +299,12 @@ function Bell({ requests, owes, go }) {
       {open && (
         <div className="sp-pop">
           {!has && <div className="none">You are all caught up.</div>}
+          {verify > 0 && (
+            <button type="button" onClick={() => pick("Udhaar")}>
+              {verify} verification request{verify > 1 ? "s" : ""}
+              <small>Tap to approve or reject</small>
+            </button>
+          )}
           {requests > 0 && (
             <button type="button" onClick={() => pick("Groups")}>
               {requests} friend request{requests > 1 ? "s" : ""}
@@ -369,20 +373,10 @@ function Shell({ session }) {
   const [friends, setFriends] = useState([]);
   const [connections, setConnections] = useState([]);
   const [profiles, setProfiles] = useState([]);
+  const [udhaar, setUdhaar] = useState([]);
   const [error, setError] = useState("");
   const phone = useIsPhone();
   const { dark } = useTheme();
-  const [settleFor, setSettleFor] = useState(null);
-  useEffect(() => {
-    if (page !== "Settlements") setSettleFor(null);
-  }, [page]);
-  const openFrom = (screen, p) => {
-    if (screen === "settle") {
-      setSettleFor(p && p.friend ? p.friend : null);
-      setPage("Settlements");
-    } else if (screen === "analytics") setPage("Analytics");
-    else setPage("Groups");
-  };
 
   async function load() {
     const [e, f, c, p] = await Promise.all([
@@ -411,18 +405,20 @@ function Shell({ session }) {
     setFriends(f.data);
     setConnections(c.data);
     setProfiles(p.data);
-    setEntries(
-      e.data.map((en) =>
-        en.user_id === myId
-          ? en
-          : {
-              ...en,
-              friend: local[en.user_id] || names[en.user_id] || "Friend",
-              paid_by: en.paid_by === "me" ? "friend" : "me",
-              shared: true,
-            }
-      )
+    const mapped = e.data.map((en) =>
+      en.user_id === myId
+        ? en
+        : {
+            ...en,
+            friend: local[en.user_id] || names[en.user_id] || "Friend",
+            paid_by: en.paid_by === "me" ? "friend" : "me",
+            shared: true,
+          }
     );
+    /* Udhaar entries wait for the friend's approval and do not count in balances until then */
+    const waiting = (x) => x.verification === "pending" || x.verification === "rejected";
+    setUdhaar(mapped.filter(waiting));
+    setEntries(mapped.filter((x) => !waiting(x)));
   }
 
   useEffect(() => {
@@ -433,6 +429,7 @@ function Shell({ session }) {
   }, [session.access_token]);
 
   const requests = connections.filter((c) => c.status === "pending" && c.addressee === myId).length;
+  const verify = udhaar.filter((x) => x.shared && x.verification === "pending").length;
   const owes = entries.filter((e) => e.status !== "Settled" && e.paid_by === "friend").slice(0, 3);
   const meta = [null, ...(TITLES[page] || TITLES.Dashboard)];
   const home = page === "Dashboard";
@@ -462,7 +459,7 @@ function Shell({ session }) {
             />
           )}
 
-          {(page === "Settlements" || page === "MerchantPay") && (
+          {page === "Settlements" && (
             <PayPage entries={entries} friends={friends} reload={load} setError={setError} />
           )}
 
@@ -489,7 +486,7 @@ function Shell({ session }) {
   );
 
   if (phone) {
-    /* Bottom bar: Home, Split, Groups, Details, Profile */
+    /* Bottom bar: Home, Split & Expense, Groups, Payments, Profile */
     const tabs = [
       ["Dashboard", "home", "Home"],
       ["Expenses", "grid", "Split & Expense"],
@@ -499,7 +496,7 @@ function Shell({ session }) {
     ];
     return (
       <div className="mb-app">
-        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && page !== "Payments" && page !== "Settlements" && page !== "Analytics" && (
+        {page !== "Groups" && page !== "Profile" && page !== "Expenses" && page !== "Payments" && page !== "Friends" && page !== "Analytics" && page !== "Udhaar" && (
         <header className="mb-top">
           <div className="mb-ttl">
             {home ? (
@@ -511,7 +508,7 @@ function Shell({ session }) {
               <h1>{meta[1]}</h1>
             )}
           </div>
-          <Bell requests={requests} owes={owes} go={setPage} />
+          <Bell requests={requests} owes={owes} verify={verify} go={setPage} />
           <ProfileMenu name={myName} go={setPage} />
         </header>
         )}
@@ -521,24 +518,24 @@ function Shell({ session }) {
           {home ? (
             <MobileHome entries={entries} go={setPage} friends={friends} />
           ) : page === "Groups" ? (
-            <Wrap dark={dark}>
-              <FriendsScreen
-                goto={openFrom}
-                onBack={() => setPage("Dashboard")}
-                sync={load}
-                manage={
-                  <Friends
-                    friends={friends}
-                    connections={connections}
-                    profiles={profiles}
-                    entries={entries}
-                    myId={myId}
-                    reload={load}
-                    setError={setError}
-                  />
-                }
-              />
-            </Wrap>
+            <MobileGroups
+              friends={friends}
+              entries={entries}
+              go={setPage}
+              reload={load}
+              setError={setError}
+              manage={
+                <Friends
+                  friends={friends}
+                  connections={connections}
+                  profiles={profiles}
+                  entries={entries}
+                  myId={myId}
+                  reload={load}
+                  setError={setError}
+                />
+              }
+            />
           ) : page === "Expenses" ? (
             <MobileSplit
               entries={entries}
@@ -554,44 +551,11 @@ function Shell({ session }) {
                     <h1>Split &amp; Expense</h1>
                     <p>Track shared expenses easily</p>
                   </div>
-                  <Bell requests={requests} owes={owes} go={setPage} />
+                  <Bell requests={requests} owes={owes} verify={verify} go={setPage} />
                   <ProfileMenu name={myName} go={setPage} />
                 </header>
               }
-              splitHub={
-                <SplitHub
-                  entries={entries}
-                  friends={friends}
-                  reload={load}
-                  setError={setError}
-                  goFriends={() => setPage("Groups")}
-                  myName={myName}
-                />
-              }
-              paymentsHub={
-                <PaymentsHub
-                  entries={entries}
-                  friends={friends}
-                  reload={load}
-                  setError={setError}
-                  goFriends={() => setPage("Groups")}
-                  myName={myName}
-                />
-              }
             />
-          ) : page === "Settlements" ? (
-            <Wrap dark={dark}>
-              <SettleScreen
-                goto={openFrom}
-                onBack={() => setPage("Dashboard")}
-                param={settleFor ? { friend: settleFor } : null}
-                sync={load}
-              />
-            </Wrap>
-          ) : page === "Analytics" ? (
-            <Wrap dark={dark}>
-              <AnalyticsScreen onBack={() => setPage("Profile")} />
-            </Wrap>
           ) : page === "Payments" ? (
             <MobilePayments
               entries={entries}
@@ -607,7 +571,7 @@ function Shell({ session }) {
                     <h1>Payments</h1>
                     <p>Track and manage all your payments in one place.</p>
                   </div>
-                  <Bell requests={requests} owes={owes} go={setPage} />
+                  <Bell requests={requests} owes={owes} verify={verify} go={setPage} />
                   <ProfileMenu name={myName} go={setPage} />
                 </header>
               }
@@ -621,6 +585,27 @@ function Shell({ session }) {
                   myName={myName}
                 />
               }
+            />
+          ) : page === "Friends" ? (
+            <MobileFriends
+              entries={entries}
+              friends={friends}
+              udhaar={udhaar}
+              go={setPage}
+              reload={load}
+              setError={setError}
+              myId={myId}
+            />
+          ) : page === "Analytics" ? (
+            <MobileAnalytics entries={entries} go={setPage} />
+          ) : page === "Udhaar" ? (
+            <MobileUdhaar
+              friends={friends}
+              udhaar={udhaar}
+              myId={myId}
+              reload={load}
+              setError={setError}
+              go={setPage}
             />
           ) : page === "Profile" ? (
             <MobileProfile
@@ -641,7 +626,7 @@ function Shell({ session }) {
 
         <nav className="mb-nav">
           {tabs.map(([key, icon, label]) => (
-            <button key={key} type="button" className={(({ Settlements: "Payments", MerchantPay: "Payments", Analytics: "Profile" })[page] || page) === key ? "on" : ""} onClick={() => setPage(key)}>
+            <button key={key} type="button" className={page === key || (key === "Dashboard" && (page === "Friends" || page === "Analytics" || page === "Udhaar")) ? "on" : ""} onClick={() => setPage(key)}>
               <Icon name={icon} size={22} />
               <span>{label}</span>
             </button>
@@ -686,7 +671,7 @@ function Shell({ session }) {
         <header className="dk-top">
           <TopSearch entries={entries} friends={friends} go={setPage} />
           <div className="dk-grow" />
-          <Bell requests={requests} owes={owes} go={setPage} />
+          <Bell requests={requests} owes={owes} verify={verify} go={setPage} />
           <ProfileMenu name={myName} go={setPage} />
         </header>
 

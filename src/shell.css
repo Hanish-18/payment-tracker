@@ -1,17 +1,18 @@
-/* SplitPay blue theme. Light and dark colours live in these variables. */
+/* SplitPay: navy sidebar, blue accents. Light and dark colours live in variables. */
 :root {
-  --bg: #f3f6fe; --side: #f8faff; --card: #ffffff; --cardline: #e9eefb; --line: #edf1fa;
+  --bg: #f1f5fd; --card: #ffffff; --cardline: #e6ecf9; --line: #edf1fa;
   --ink: #0f1f4a; --mut: #5b6b8f; --pri: #1d62f0; --pri2: #3b82ff;
-  --tile: #eef3ff; --tile2: #dfe9ff; --inputbg: #ffffff; --inputline: #dde5f6;
+  --tile: #f0f4ff; --tile2: #dfe9ff; --inputbg: #ffffff; --inputline: #dbe3f5;
   --shadow: 0 4px 20px rgba(20, 60, 160, 0.07);
   --bal-bg: linear-gradient(135deg, #0a47d6, #2f7bff); --bal-line: transparent;
   --get-bg: linear-gradient(135deg, #e8f9ee, #d3f2de); --get-line: transparent; --get-ink: #15803d; --get-ic: #16a34a;
   --owe-bg: linear-gradient(135deg, #feeaed, #fbd6dc); --owe-line: transparent; --owe-ink: #d11a2a; --owe-ic: #e11d48;
   --trip: linear-gradient(160deg, #1b2a52 0%, #3a4f8f 50%, #e49a6b 100%);
-  --wave1: #bcd2ff; --wave2: #2f6df0;
+  --side-bg: linear-gradient(180deg, #0c2257 0%, #0a1b47 72%, #0b2a6e 100%);
+  --wave1: #153f9a; --wave2: #1f66f2;
 }
 html[data-theme="dark"] {
-  --bg: #0a1120; --side: #0d1628; --card: #0f1a2e; --cardline: #1a2b4a; --line: #1a2b4a;
+  --bg: #0a1120; --card: #0f1a2e; --cardline: #1a2b4a; --line: #1a2b4a;
   --ink: #eaf0ff; --mut: #8fa2c7; --pri: #1f5fff; --pri2: #3d7bff;
   --tile: #14233f; --tile2: #193058; --inputbg: #0c1730; --inputline: #1d2f52;
   --shadow: none;
@@ -19,7 +20,8 @@ html[data-theme="dark"] {
   --get-bg: linear-gradient(135deg, #0f2f26, #0c2a22); --get-line: #1d5a3c; --get-ink: #3ddc84; --get-ic: #3ddc84;
   --owe-bg: linear-gradient(135deg, #34121e, #2a101a); --owe-line: #7a2434; --owe-ink: #ff5a74; --owe-ic: #ff5a74;
   --trip: linear-gradient(160deg, #0f1c3d 0%, #243a78 55%, #b9774f 100%);
-  --wave1: #16407f; --wave2: #1553d6;
+  --side-bg: linear-gradient(180deg, #0b1426 0%, #0a1224 75%, #0a1c42 100%);
+  --wave1: #12337a; --wave2: #1553d6;
 }
 
 .sp-shell { display: flex; min-height: 100vh; background: var(--bg); color: var(--ink); }
@@ -28,36 +30,35 @@ html[data-theme="dark"] #root > .sp-shell { background: var(--bg) !important; }
 html[data-theme="dark"] .sp-shell main.sp-content { background: transparent !important; }
 
 /* Sidebar */
-.sp-side { width: 260px; flex: 0 0 260px; position: sticky; top: 0; height: 100vh; padding: 22px 16px 0; display: flex; flex-direction: column; background: var(--side); border-right: 1px solid var(--cardline); overflow: hidden; }
-.sp-logo { display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 800; color: var(--ink); margin: 4px 6px 26px; }
-.sp-logo b { color: var(--pri); font-weight: 800; }
-.sp-logo-ic { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #0a4fe0, #3b82ff); display: grid; place-items: center; color: #fff; }
-.sp-nav button { display: flex; align-items: center; gap: 14px; width: 100%; border: 0; box-shadow: none; background: transparent; padding: 12px 16px; border-radius: 12px; font-size: 15.5px; font-weight: 600; color: var(--mut); cursor: pointer; margin-bottom: 4px; text-align: left; font-family: inherit; }
-.sp-nav button:hover { background: var(--tile); color: var(--ink); }
-.sp-nav button.on { background: linear-gradient(135deg, var(--pri), var(--pri2)); color: #fff; box-shadow: 0 8px 20px rgba(29, 98, 240, 0.28); }
-.sp-app { margin: 20px 8px 0; padding-top: 16px; border-top: 1px solid var(--cardline); color: var(--ink); }
-.sp-app b { display: flex; align-items: center; gap: 8px; font-size: 15px; }
-.sp-app small { display: block; color: var(--mut); margin: 4px 0 10px; font-size: 12.5px; }
-.sp-qrbox { display: inline-block; background: #fff; padding: 8px; border-radius: 12px; }
-.sp-mtn { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 110px; pointer-events: none; }
-.sp-mtn path:nth-child(1) { fill: var(--wave1); opacity: 0.75; }
-.sp-mtn path:nth-child(2) { fill: var(--wave2); }
+.sp-side { width: 250px; flex: 0 0 250px; position: sticky; top: 0; height: 100vh; padding: 20px 14px 0; display: flex; flex-direction: column; background: var(--side-bg); overflow: hidden; }
+.sp-logo { display: flex; align-items: center; gap: 10px; font-size: 25px; font-weight: 800; color: #fff; margin: 2px 8px 26px; }
+.sp-logo b { color: #fff; font-weight: 800; }
+.sp-logo-ic { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #1a6bff, #3fa0ff); display: grid; place-items: center; color: #fff; }
+.sp-nav button, .sp-set button { display: flex; align-items: center; gap: 14px; width: 100%; border: 0; box-shadow: none; background: transparent; padding: 12px 16px; border-radius: 12px; font-size: 15.5px; font-weight: 600; color: #d3def8; cursor: pointer; margin-bottom: 4px; text-align: left; font-family: inherit; }
+.sp-nav button:hover, .sp-set button:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.sp-nav button.on, .sp-set button.on { background: linear-gradient(135deg, #1f66f2, #3a82ff); color: #fff; box-shadow: 0 8px 20px rgba(31, 102, 242, 0.35); }
+.sp-set { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+.sp-app { margin: 18px 4px 0; padding: 14px; border-radius: 18px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); color: #fff; position: relative; z-index: 1; }
+.sp-app b { display: block; font-size: 16px; line-height: 1.25; }
+.sp-app small { display: block; color: #bccaee; margin: 6px 0 10px; font-size: 12px; }
+.sp-qrbox { display: inline-block; background: #fff; padding: 7px; border-radius: 10px; }
+.sp-mtn { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 100px; pointer-events: none; }
+.sp-mtn path:nth-child(1) { fill: var(--wave1); opacity: 0.8; }
+.sp-mtn path:nth-child(2) { fill: var(--wave2); opacity: 0.9; }
 
-/* Right side and top bar */
-.sp-body { flex: 1; min-width: 0; padding: 22px 28px 40px; }
-.sp-top { display: flex; align-items: center; gap: 16px; background: transparent; padding: 0; margin-bottom: 20px; }
-.sp-ttl { flex: 1; min-width: 0; }
-.sp-ttl h1 { margin: 0; font-size: 28px; font-weight: 800; color: var(--ink); line-height: 1.1; }
-.sp-ttl p { margin: 4px 0 0; color: var(--mut); font-size: 14px; }
-.sp-search { position: relative; width: min(430px, 36vw); }
+/* Right side */
+.sp-body { flex: 1; min-width: 0; padding: 18px 28px 40px; }
+.sp-top { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.sp-ttl.mob { display: none; }
+.sp-search { position: relative; flex: 1; max-width: 560px; }
 .sp-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--mut); }
-.sp-search input { width: 100%; border: 1px solid var(--inputline); border-radius: 999px; padding: 12px 64px 12px 42px; font-size: 14px; background: var(--card); color: var(--ink); margin: 0; font-family: inherit; }
+.sp-search input { width: 100%; border: 1px solid var(--inputline); border-radius: 14px; padding: 12px 64px 12px 42px; font-size: 14px; background: var(--card); color: var(--ink); margin: 0; font-family: inherit; }
 .sp-search kbd { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--tile); color: var(--mut); border-radius: 8px; padding: 3px 8px; font-size: 12px; font-family: inherit; }
 .sp-ib { position: relative; }
-.sp-bell { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--cardline); box-shadow: none; background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
-.sp-dot { position: absolute; top: 9px; right: 11px; width: 9px; height: 9px; border-radius: 50%; background: var(--pri2); border: 2px solid var(--card); }
+.sp-bell { margin-left: auto; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--cardline); box-shadow: none; background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.sp-dot { position: absolute; top: 9px; right: 11px; width: 9px; height: 9px; border-radius: 50%; background: #ef4444; border: 2px solid var(--card); }
 .sp-user { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; cursor: pointer; padding: 0; color: var(--ink); font-weight: 700; font-size: 15px; font-family: inherit; box-shadow: none; }
-.sp-avatar { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #0a4fe0, #3b82ff); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 18px; flex: 0 0 auto; }
+.sp-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #0a4fe0, #3b82ff); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 18px; flex: 0 0 auto; }
 .sp-pop { position: absolute; right: 0; top: calc(100% + 10px); background: var(--card); border: 1px solid var(--cardline); border-radius: 16px; box-shadow: 0 12px 40px rgba(10, 25, 70, 0.25); min-width: 240px; padding: 8px; z-index: 80; text-align: left; }
 .sp-search .sp-pop { left: 0; right: auto; width: 100%; }
 .sp-pop button { display: block; width: 100%; text-align: left; border: 0; box-shadow: none; background: transparent; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--ink); font-family: inherit; font-weight: 600; }
@@ -66,7 +67,18 @@ html[data-theme="dark"] .sp-shell main.sp-content { background: transparent !imp
 .sp-pop .hd { font-size: 11px; font-weight: 800; color: var(--pri); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px 2px; }
 .sp-pop .none { padding: 12px; color: var(--mut); font-size: 14px; }
 
-/* Old pages (Groups, Expenses, Settlements, Payments, Analytics, Profile) in the same colours */
+/* Page title below the top bar */
+.sp-pagehead { margin: 4px 0 18px; }
+.sp-pagehead h1 { margin: 0; font-size: 30px; font-weight: 800; color: var(--ink); line-height: 1.1; }
+.sp-pagehead p { margin: 5px 0 0; color: var(--mut); font-size: 14.5px; }
+html[data-theme="dark"] .sp-pagehead p, html[data-theme="dark"] .sp-hi-sub { color: var(--mut) !important; }
+
+/* Expenses page tabs */
+.sp-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.sp-tabs button { border: 1px solid var(--cardline); background: var(--card); color: var(--ink); border-radius: 999px; padding: 9px 18px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; box-shadow: none; }
+.sp-tabs button.on { background: var(--pri); border-color: var(--pri); color: #fff; }
+
+/* Older pages (Friends, Payments, Settle Up, Analytics, Profile) in the same colours */
 .sp-content > h1, .sp-content > p.sub { display: none; }
 .sp-content h2, .sp-content h3 { color: var(--ink) !important; }
 .sp-content .card, .sp-content .stat { background: var(--card) !important; border: 1px solid var(--cardline) !important; border-radius: 18px !important; box-shadow: var(--shadow) !important; color: var(--ink) !important; }
@@ -79,21 +91,3 @@ html[data-theme="dark"] .sp-shell main.sp-content { background: transparent !imp
 .sp-content .seg button { background: var(--tile) !important; color: var(--ink) !important; border: 1px solid var(--cardline) !important; }
 .sp-content .seg button.on, .sp-content .tab.active { background: var(--pri) !important; color: #fff !important; }
 .sp-content .badge { background: var(--tile) !important; color: var(--pri) !important; }
-html[data-theme="dark"] .sp-ttl p, html[data-theme="dark"] .sp-hi-sub { color: var(--mut) !important; }
-
-/* Phone: sidebar becomes a bottom bar */
-@media (max-width: 900px) {
-  .sp-shell { display: block; }
-  .sp-side { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; height: auto; flex-direction: row; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); z-index: 60; border-top: 1px solid var(--cardline); border-right: 0; }
-  .sp-logo, .sp-app, .sp-mtn { display: none; }
-  .sp-nav { display: flex; width: 100%; justify-content: space-around; }
-  .sp-nav button { flex-direction: column; gap: 3px; font-size: 10.5px; padding: 8px 2px; width: auto; margin: 0; text-align: center; }
-  .sp-body { padding: 14px 12px 96px; }
-  .sp-top { gap: 10px; }
-  .sp-ttl h1 { font-size: 20px; }
-  .sp-ttl p { display: none; }
-  .sp-search { width: auto; flex: 1; }
-  .sp-search kbd { display: none; }
-  .sp-user .nm, .sp-user .cv { display: none; }
-  .sp-bell, .sp-avatar { width: 40px; height: 40px; }
-}

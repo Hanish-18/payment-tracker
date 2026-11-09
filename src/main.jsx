@@ -5,6 +5,7 @@ import App from './App.jsx'
 import RecoveryGate from './Recovery'
 import './ThemeToggle'
 
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <RecoveryGate>
