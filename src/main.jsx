@@ -1,15 +1,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import AppRoot from './AppRoot.jsx'
+import App from './App.jsx'
 import RecoveryGate from './Recovery'
 import './ThemeToggle'
-import './Accent'
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <RecoveryGate>
-      <AppRoot />
+      <App />
     </RecoveryGate>
   </StrictMode>,
 )
