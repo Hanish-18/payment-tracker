@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "./supabaseClient";
 import PhoneLogin from "./PhoneLogin";
+import EmailOtpLogin from "./EmailOtpLogin";
 import ForgotPassword from "./ForgotPassword";
 import "./auth.css";
 
@@ -104,12 +105,14 @@ export default function AuthChoice({ emailForm }) {
       <div className="sa-card">
         {via !== "forgot" && (
           <div className="sa-tabs">
-            <button type="button" className={via === "email" ? "on" : ""} onClick={() => setVia("email")}>Email</button>
+            <button type="button" className={via === "email" ? "on" : ""} onClick={() => setVia("email")}>Password</button>
+            <button type="button" className={via === "emailotp" ? "on" : ""} onClick={() => setVia("emailotp")}>Email OTP</button>
             <button type="button" className={via === "phone" ? "on" : ""} onClick={() => setVia("phone")}>Mobile OTP</button>
           </div>
         )}
 
         {via === "email" && emailForm}
+        {via === "emailotp" && <EmailOtpLogin />}
         {via === "phone" && <PhoneLogin />}
         {via === "forgot" && <ForgotPassword onBack={() => setVia("email")} />}
       </div>
